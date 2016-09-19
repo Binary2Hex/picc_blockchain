@@ -4,6 +4,7 @@
 ### Blockchain network
 - 你可以使用Bluemix的blockchain service
 - 也可以使用local Blockchain network(基于commit level: [3e0e80a898b259fe463295eabff80ee64f20695e](https://github.com/hyperledger-archives/fabric/commit/3e0e80a898b259fe463295eabff80ee64f20695e))
+
 ### 如何搭建local Blockchain network
 开发过程我们使用local Blockchain network 更加稳定灵活，便于调试。基本步骤如下:
 - 在Linux开发机上git clone上面提到的commit level
