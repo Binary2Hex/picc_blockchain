@@ -25,6 +25,6 @@ vp:
   volumes: # docker.sock is mapped as the default CORE_VM_ENDPOINT
     - /var/run/docker.sock:/var/run/docker.sock
     - ./core.yaml:/opt/gopath/src/github.com/hyperledger/fabric/core.yaml
-    - ./`config.yaml:/opt/gopath/src/github.com/hyperledger/fabric/consensus/pbft/config.yaml
+    - ./config.yaml:/opt/gopath/src/github.com/hyperledger/fabric/consensus/pbft/config.yaml
   command: peer node start  # this repeats the default cmd to make sure
 # command: sh -c "sleep 5; peer node start"  # peer node should have booting delay with CA
