@@ -59,7 +59,7 @@ eca:
                   - bank_c
               institutions:
                   - institution_a
-                  - group1
+                  - picc_poc
         users:
                 #
                 # The fields of each user are as follows:
