@@ -32,7 +32,7 @@
 | Vaccinated      | String, 用于记录肉牛接种信息,若为空则表示未进行过任何接种                                                    |
 | InsuranceID     | String, 用于记录肉牛的投保id,若id为空则代表未投保                                                          |
 | Loan            | Int, 记录此肉牛的贷款额                                                                                 |
-| LoanID          | Int, 记录此肉牛的贷款id                                                                                |
+| LoanID          | String, 记录此肉牛的贷款id                                                                                |
 | Origin          | String, 记录肉牛产地                                                                                   |
 | Trader          | String, 记录进口贸易商名称                                                                              |
 | Status          | Int, 用于记录肉牛在整个生命周期中所处的状态                                                                |
