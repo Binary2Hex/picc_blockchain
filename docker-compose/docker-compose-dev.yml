@@ -1,0 +1,43 @@
+# This compose file will start 4 hyperledger peer nodes + 1 CA node.
+# We add a delay to start the VP nodes after CA node:
+# command: sh -c "sleep 5; peer node start"
+#
+#  vp0: validating node as root
+#  vp1: validating node as peer
+#  vp2: validating node as peer
+#  vp3: validating node as peer
+# https://github.com/yeasy/docker-compose-files
+
+membersrvc:
+  image: hyperledger/fabric-membersrvc:latest
+  restart: unless-stopped
+  expose:
+    - "50051"
+  ports:
+    - "50051:50051"
+  volumes: # docker.sock is mapped as the default CORE_VM_ENDPOINT
+    - /var/run/docker.sock:/var/run/docker.sock
+    - ./membersrvc.yaml:/opt/gopath/src/github.com/hyperledger/fabric/membersrvc/membersrvc.yaml
+  command: membersrvc  # this repeats the default cmd to make sure
+
+# validating node as the root
+vp0:
+  extends:
+    file: peer-pbft.yml
+    service: vp
+  hostname: vp0
+  environment:
+    - CORE_PEER_ID=vp0
+    - CORE_SECURITY_ENABLED=true
+    - CORE_SECURITY_ENROLLID=test_vp0
+    - CORE_SECURITY_ENROLLSECRET=MwYpmSRjupbT
+    - CORE_PEER_PKI_ECA_PADDR=membersrvc:50051
+    - CORE_PEER_PKI_TCA_PADDR=membersrvc:50051
+    - CORE_PEER_PKI_TLSCA_PADDR=membersrvc:50051
+  ports:
+    - "31315:31315"
+    - "30303:30303"
+    - "5000:5000"
+  links:
+    - membersrvc
+  command: sh -c "sleep 5; peer node start --peer-chaincodedev"
