@@ -4,6 +4,7 @@
 ### Blockchain network
 - 你可以使用Bluemix的blockchain service
 - 也可以使用local Blockchain network(基于commit level: [3e0e80a898b259fe463295eabff80ee64f20695e](https://github.com/hyperledger-archives/fabric/commit/3e0e80a898b259fe463295eabff80ee64f20695e))
+
 ### 如何搭建local Blockchain network
 开发过程我们使用local Blockchain network 更加稳定灵活，便于调试。基本步骤如下:
 - 在Linux开发机上git clone上面提到的commit level
@@ -12,6 +13,7 @@
 
 ## 应用简介
 此POC用来追踪肉牛的生命周期，基本流程如下
+  
 1. 进口贸易商(暂不纳入区块链网络)从国外进口肉牛卖给养殖场/农户
 2. 养殖场/农户将肉牛在兽医局做防疫
 3. 养殖场/农户对肉牛上保险
