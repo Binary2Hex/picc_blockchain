@@ -82,22 +82,51 @@ type ECertResponse struct {
 //==============================================================================================================================
 //	 常量定义
 //==============================================================================================================================
-const CATTLE_IDS = "_cattleIDs"
+const CATTLE_TABLE_NAME = "beefCattleTable"
 
 // SimpleChaincode example implementation
 type CattleChaincode struct {
 }
 
 func (t *CattleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
-	var cattleSet CattleSet
-	bytes, err := json.Marshal(cattleSet)
+	columnDefinitios := []*shim.ColumnDefinition{
+		{Name: "Id", Type: shim.ColumnDefinition_STRING, Key: true},
+		{Name: "Vaccinated", Type: shim.ColumnDefinition_STRING, Key: false},
+		{Name: "InsuranceID", Type: shim.ColumnDefinition_STRING, Key: true},
+		{Name: "Loan", Type: shim.ColumnDefinition_INT64, Key: false},
+		{Name: "LoanID", Type: shim.ColumnDefinition_STRING, Key: true},
+		{Name: "Origin", Type: shim.ColumnDefinition_STRING, Key: true},
+		{Name: "Trader", Type: shim.ColumnDefinition_STRING, Key: true},
+		{Name: "Status", Type: shim.ColumnDefinition_INT32, Key: false},
+	}
+	table, err := stub.GetTable(CATTLE_TABLE_NAME)
+	if table != nil {
+		fmt.Printf("table already exists:%s\n", CATTLE_TABLE_NAME)
+		return []byte("Table already exists"), nil
+	}
+	err = stub.CreateTable(CATTLE_TABLE_NAME, columnDefinitios)
 	if err != nil {
-		return nil, errors.New("Error initializing Cattle Set record!")
+		return nil, err
 	}
 
-	err = stub.PutState(CATTLE_IDS, bytes)
+	// TODO, THIS IS JUST FOR TESTING
+	t.insertRow(stub, "0000000000", "Vaccinated@2016", "PICC_INSR_789", 100, "PICC_LOAN_123", "Switzerland", "TraderA", 0)
+	t.insertRow(stub, "0000000001", "Vaccinated@2015", "PICC_INSR_711", 80, "", "Switzerland", "TraderA", 0)
 
 	return nil, nil
+}
+func (t *CattleChaincode) insertRow(stub *shim.ChaincodeStub, id string, vaccinated string, insuranceID string, loan int64, loanID string, origin string, trader string, status int32) (bool, error) {
+	row := shim.Row{Columns: []*shim.Column{
+		{Value: &shim.Column_String_{String_: id}},
+		{Value: &shim.Column_String_{String_: vaccinated}},
+		{Value: &shim.Column_String_{String_: insuranceID}},
+		{Value: &shim.Column_Int64{Int64: loan}},
+		{Value: &shim.Column_String_{String_: loanID}},
+		{Value: &shim.Column_String_{String_: origin}},
+		{Value: &shim.Column_String_{String_: trader}},
+		{Value: &shim.Column_Int32{Int32: status}},
+	}}
+	return stub.InsertRow(CATTLE_TABLE_NAME, row)
 }
 
 func (t *CattleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
@@ -188,7 +217,20 @@ func (t *CattleChaincode) getCaller(stub *shim.ChaincodeStub) (string, string, i
 }
 
 func (t *CattleChaincode) getAllCattles(stub *shim.ChaincodeStub) ([]byte, error) {
-	return stub.GetState(CATTLE_IDS)
+	//rows, err := stub.GetRows(CATTLE_TABLE_NAME, []shim.Column{{Value: &shim.Column_String_{String_: "0000000000"}}})
+	rows, err := stub.GetRows(CATTLE_TABLE_NAME, nil)
+	var cattles []shim.Row
+	for row := range rows {
+		cattles = append(cattles, row)
+	}
+	if err != nil {
+		return nil, err
+	}
+	response, err := json.Marshal(cattles)
+	if err != nil {
+		fmt.Printf("marshal row error: %s\n", err)
+	}
+	return response, nil
 }
 
 func main() {
