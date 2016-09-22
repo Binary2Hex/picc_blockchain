@@ -11,6 +11,9 @@
 - 在fabric目录下执行`make images`命令以生成我们需要的*hyperledger/fabric-peer:latest*、*hyperledger/fabric-membersrvc:latest*以及*hyperledger/fabric-baseimage:latest*等docker镜像
 - 在本项目的docker-compose目录下执行`docker-compose up`命令，就可以创建一个4节点+membersrvc的网络了
 
+### 如何搭建1 peer+ memberservice的环境用于chaincode开发(以chaincode-example02为例)
+参考[setup_chaincode_dev.md](docs/setup_chaincode_dev.md)
+
 ## 应用简介
 此POC用来追踪肉牛的生命周期，基本流程如下
   
