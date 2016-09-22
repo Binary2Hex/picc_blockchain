@@ -60,6 +60,7 @@ POST localhost:5000/chaincode
 ```
 #### query chaincode
 ```
+POST localhost:5000/chaincode
 {
   "jsonrpc": "2.0",
   "method": "query",
