@@ -23,7 +23,7 @@ membersrvc:
 # validating node as the root
 vp0:
   extends:
-    file: peer-pbft.yml
+    file: peer-noops.yml
     service: vp
   hostname: vp0
   environment:
