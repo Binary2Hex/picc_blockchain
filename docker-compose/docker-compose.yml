@@ -56,6 +56,10 @@ vp1:
     - CORE_PEER_PKI_ECA_PADDR=membersrvc:50051
     - CORE_PEER_PKI_TCA_PADDR=membersrvc:50051
     - CORE_PEER_PKI_TLSCA_PADDR=membersrvc:50051
+  ports:
+    - "31316:31315"
+    - "30304:30303"
+    - "5001:5000"
   links:
     - membersrvc
     - vp0
@@ -75,6 +79,10 @@ vp2:
     - CORE_PEER_PKI_ECA_PADDR=membersrvc:50051
     - CORE_PEER_PKI_TCA_PADDR=membersrvc:50051
     - CORE_PEER_PKI_TLSCA_PADDR=membersrvc:50051
+  ports:
+    - "31317:31315"
+    - "30305:30303"
+    - "5002:5000"
   links:
     - membersrvc
     - vp0
@@ -97,6 +105,10 @@ vp3:
     - CORE_PEER_PKI_ECA_PADDR=membersrvc:50051
     - CORE_PEER_PKI_TCA_PADDR=membersrvc:50051
     - CORE_PEER_PKI_TLSCA_PADDR=membersrvc:50051
+  ports:
+    - "31318:31315"
+    - "30306:30303"
+    - "5003:5000"
   links:
     - membersrvc
     - vp0
