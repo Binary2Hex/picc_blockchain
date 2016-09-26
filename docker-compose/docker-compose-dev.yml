@@ -18,7 +18,7 @@ membersrvc:
   volumes: # docker.sock is mapped as the default CORE_VM_ENDPOINT
     - /var/run/docker.sock:/var/run/docker.sock
     - ./membersrvc.yaml:/opt/gopath/src/github.com/hyperledger/fabric/membersrvc/membersrvc.yaml
-  command: membersrvc  # this repeats the default cmd to make sure
+  command: membersrvc 2>&1|tee membersrvc.log # this repeats the default cmd to make sure
 
 # validating node as the root
 vp0:
@@ -40,4 +40,4 @@ vp0:
     - "5000:5000"
   links:
     - membersrvc
-  command: sh -c "sleep 5; peer node start --peer-chaincodedev"
+  command: sh -c "sleep 5; peer node start --peer-chaincodedev 2>&1|tee vp0.log"
