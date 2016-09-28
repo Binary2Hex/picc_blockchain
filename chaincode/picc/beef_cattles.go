@@ -1,17 +1,5 @@
 /*
 Copyright IBM Corp. 2016 All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-		 http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
 */
 
 package main
@@ -27,6 +15,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -50,21 +39,17 @@ const STATE_INITIALIZED = 0
 //	 网络中的一头/批肉牛
 //==============================================================================================================================
 type Cattle struct {
-	Id          string `json:"id"`
-	Vaccinated  string `json:"vaccinated"`
-	InsuranceID string `json:"insuranceID"`
-	Loan        int    `json:"loan"`
-	LoanID      string `json:"loanID"`
-	Origin      string `json:"origin"`
-	Trader      string `json:"trader"`
-	Status      int    `json:"status"`
-}
-
-//==============================================================================================================================
-//	 记录网络中所有肉牛的id，可以用来查询所有的肉牛
-//==============================================================================================================================
-type CattleSet struct {
-	Ids []string `json:"ids"`
+	Id            string `json:"id"`
+	Vaccinated    bool   `json:"vaccinated"`
+	InsuranceID   string `json:"insuranceID"`
+	InsuranceCorp string `json:"insuranceCorp"`
+	Loan          int    `json:"loan"`
+	LoanID        string `json:"loanID"`
+	LoanCorp      string `json:"loanCorp"`
+	Origin        string `json:"origin"`
+	Trader        string `json:"trader"`
+	Status        int    `json:"status"`
+	Owner         string `json:"owner"`
 }
 
 //==============================================================================================================================
@@ -79,58 +64,94 @@ type ECertResponse struct {
 	OK string
 }
 
-//==============================================================================================================================
-//	 常量定义
-//==============================================================================================================================
-const CATTLE_TABLE_NAME = "beefCattleTable"
-
-// SimpleChaincode example implementation
 type CattleChaincode struct {
 }
 
 func (t *CattleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
-	columnDefinitios := []*shim.ColumnDefinition{
-		{Name: "Id", Type: shim.ColumnDefinition_STRING, Key: true},
-		{Name: "Vaccinated", Type: shim.ColumnDefinition_STRING, Key: false},
-		{Name: "InsuranceID", Type: shim.ColumnDefinition_STRING, Key: true},
-		{Name: "Loan", Type: shim.ColumnDefinition_INT64, Key: false},
-		{Name: "LoanID", Type: shim.ColumnDefinition_STRING, Key: true},
-		{Name: "Origin", Type: shim.ColumnDefinition_STRING, Key: true},
-		{Name: "Trader", Type: shim.ColumnDefinition_STRING, Key: true},
-		{Name: "Status", Type: shim.ColumnDefinition_INT32, Key: false},
+
+	if function == "init" {
+		// TODO, THIS IS JUST FOR TESTING
+		cattle0 := Cattle{Id: "0000000000"}
+		cattle1 := Cattle{Id: "0000000001"}
+		cattle0Bytes, err := json.Marshal(cattle0)
+		if err != nil {
+			return nil, err
+		}
+		stub.PutState(cattle0.Id, cattle0Bytes)
+		cattle1Bytes, err := json.Marshal(cattle1)
+		if err != nil {
+			return nil, err
+		}
+		stub.PutState(cattle1.Id, cattle1Bytes)
+		return nil, nil
 	}
-	table, err := stub.GetTable(CATTLE_TABLE_NAME)
-	if table != nil {
-		fmt.Printf("table already exists:%s\n", CATTLE_TABLE_NAME)
-		return []byte("Table already exists"), nil
-	}
-	err = stub.CreateTable(CATTLE_TABLE_NAME, columnDefinitios)
+
+	return nil, errors.New("function: " + function + " not supported!")
+
+}
+
+func (t *CattleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+	username, _, affiliationRole, err := t.getCaller(stub)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO, THIS IS JUST FOR TESTING
-	t.insertRow(stub, "0000000000", "Vaccinated@2016", "PICC_INSR_789", 100, "PICC_LOAN_123", "Switzerland", "TraderA", 0)
-	t.insertRow(stub, "0000000001", "Vaccinated@2015", "PICC_INSR_711", 80, "", "Switzerland", "TraderA", 0)
+	if function == "createCattle" {
+		if affiliationRole != GOV {
+			return nil, errors.New("Unauthorized to create new cattle")
+		}
+		if len(args) != 2 {
+			return nil, errors.New("2 args are required for createCattle")
+		}
+		return t.createCattle(stub, args[0], args[1])
+	}
+	if function == "traderToFarm" {
+		if len(args) != 3 {
+			return nil, errors.New("3 args are required for traderToFarm")
+		}
+		return t.traderToFarm(stub, username, args[0], args[1], args[2])
+	}
 
-	return nil, nil
-}
-func (t *CattleChaincode) insertRow(stub *shim.ChaincodeStub, id string, vaccinated string, insuranceID string, loan int64, loanID string, origin string, trader string, status int32) (bool, error) {
-	row := shim.Row{Columns: []*shim.Column{
-		{Value: &shim.Column_String_{String_: id}},
-		{Value: &shim.Column_String_{String_: vaccinated}},
-		{Value: &shim.Column_String_{String_: insuranceID}},
-		{Value: &shim.Column_Int64{Int64: loan}},
-		{Value: &shim.Column_String_{String_: loanID}},
-		{Value: &shim.Column_String_{String_: origin}},
-		{Value: &shim.Column_String_{String_: trader}},
-		{Value: &shim.Column_Int32{Int32: status}},
-	}}
-	return stub.InsertRow(CATTLE_TABLE_NAME, row)
-}
+	if function == "vaccinate" {
+		if affiliationRole != GOV {
+			return nil, errors.New("Unauthorized to create new cattle")
+		}
+		if len(args) != 1 {
+			return nil, errors.New("1 arg is required for vaccinate")
+		}
+		return t.vaccinate(stub, args[0])
+	}
 
-func (t *CattleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
-	return nil, nil
+	if function == "applyForInsurance" {
+		if affiliationRole != FARM {
+			return nil, errors.New("only farm can apply for insurance")
+		}
+		// TODO, to be implemented!!!
+	}
+
+	if function == "insure" {
+		if affiliationRole != INSURANCE {
+			return nil, errors.New("only insurance company can insure")
+		}
+		// TODO, to be implemented!!!
+	}
+
+	if function == "applyForLoan" {
+		if affiliationRole != FARM {
+			return nil, errors.New("only farm can apply for loan")
+		}
+		// TODO, to be implemented!!!
+	}
+
+	if function == "loan" {
+		if affiliationRole != BANK {
+			return nil, errors.New("only Bank can serve a loan")
+		}
+		// TODO, to be implemented!!!
+	}
+
+	fmt.Println("function: " + function + " not supported!")
+	return nil, errors.New("function: " + function + " not supported!")
 }
 
 // Query callback representing the query of a chaincode
@@ -147,7 +168,23 @@ func (t *CattleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	}
 
 	if function == "getAllCattles" {
+		if affiliationRole != GOV {
+			return nil, errors.New("only GOV can do a full query")
+		}
 		return t.getAllCattles(stub)
+	}
+
+	if function == "getAllMyCattles" {
+		// TODO, to be implemented
+		return nil, nil
+	}
+
+	if function == "getCattleByID" {
+		if len(args) != 1 {
+			return nil, errors.New("need 1 arg for getCattleByID")
+		}
+		// TODO, to be implemented
+		return nil, nil
 	}
 
 	return []byte(username), nil
@@ -217,20 +254,101 @@ func (t *CattleChaincode) getCaller(stub *shim.ChaincodeStub) (string, string, i
 }
 
 func (t *CattleChaincode) getAllCattles(stub *shim.ChaincodeStub) ([]byte, error) {
-	//rows, err := stub.GetRows(CATTLE_TABLE_NAME, []shim.Column{{Value: &shim.Column_String_{String_: "0000000000"}}})
-	rows, err := stub.GetRows(CATTLE_TABLE_NAME, nil)
-	var cattles []shim.Row
-	for row := range rows {
-		cattles = append(cattles, row)
-	}
+	iter, err := stub.RangeQueryState("0", ":")
 	if err != nil {
 		return nil, err
 	}
-	response, err := json.Marshal(cattles)
-	if err != nil {
-		fmt.Printf("marshal row error: %s\n", err)
+
+	var cattles []Cattle
+	var cattle Cattle
+	for iter.HasNext() {
+		_, bytes, err := iter.Next()
+		if err == nil {
+			json.Unmarshal(bytes, &cattle)
+			cattles = append(cattles, cattle)
+		}
 	}
-	return response, nil
+
+	res, err := json.Marshal(cattles)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (t *CattleChaincode) createCattle(stub *shim.ChaincodeStub, id string, trader string) ([]byte, error) {
+	fmt.Println("createCattle called")
+	matched, err := regexp.Match("^[0-9]{10}$", []byte(id))
+	if matched == false {
+		fmt.Println("id format error")
+		return nil, err
+	}
+	bytes, err := stub.GetState(id)
+	if err != nil {
+		return nil, err
+	}
+	if bytes != nil {
+		fmt.Println("id: " + id + " already exists")
+		return nil, errors.New("id: " + id + " already exists")
+	}
+	cattle := Cattle{Id: id, Trader: trader, Owner: trader}
+	cattleBytes, err := json.Marshal(cattle)
+	if err != nil {
+		return nil, err
+	}
+	stub.PutState(id, cattleBytes)
+	fmt.Println("successfully created with id: " + id)
+	return []byte("successfully created with id: " + id), nil
+}
+
+func (t *CattleChaincode) traderToFarm(stub *shim.ChaincodeStub, username, id string, trader, farm string) ([]byte, error) {
+	bytes, err := stub.GetState(id)
+	if err != nil {
+		return nil, err
+	}
+	if bytes == nil {
+		return nil, errors.New("no cattle found with id: " + id)
+	}
+
+	var cattle Cattle
+	err = json.Unmarshal(bytes, &cattle)
+	if err != nil {
+		return nil, err
+	}
+
+	if cattle.Owner != username {
+		return nil, errors.New("unauthorized to transfer from trader to farm")
+	}
+	cattle.Owner = farm
+	return t.rawSave(stub, cattle)
+}
+
+func (t CattleChaincode) vaccinate(stub *shim.ChaincodeStub, id string) ([]byte, error) {
+	bytes, err := stub.GetState(id)
+	if err != nil {
+		return nil, err
+	}
+	if bytes == nil {
+		return nil, errors.New("no cattle found with id: " + id)
+	}
+
+	var cattle Cattle
+	err = json.Unmarshal(bytes, &cattle)
+	if err != nil {
+		return nil, err
+	}
+	cattle.Vaccinated = true
+	return t.rawSave(stub, cattle)
+}
+
+func (t CattleChaincode) rawSave(stub *shim.ChaincodeStub, cattle Cattle) ([]byte, error) {
+	bytes, err := json.Marshal(cattle)
+	if err != nil {
+		return nil, err
+	}
+	stub.PutState(cattle.Id, bytes)
+	fmt.Println("save cattle with id:" + cattle.Id + "completed")
+	return []byte("save cattle with id:" + cattle.Id + "completed"), nil
 }
 
 func main() {
