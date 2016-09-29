@@ -20,82 +20,22 @@ under the License.
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
-	"github.com/hyperledger/fabric/events/consumer"
-	pb "github.com/hyperledger/fabric/protos"
-	"net/http"
-	"errors"
 	"io/ioutil"
-	"encoding/json"
-	"os"
+	"net/http"
+	"time"
 )
 
-const PEER0 = 0
-const PEER1 = 1
-const PEER2 = 2
-const PEER3 = 3
-
-const CHAN_SIZE = 100
-
-type adapter struct {
-	name int
-	addr string
-	notfy chan *pb.Event_Block
-}
-
-type BlockEvent struct {
-	peer int
-	event *pb.Event_Block
-}
-
 type ChainResponse struct {
-	Height int  `json:"height"`
-	CurrentBlockHash string  `json:"currentBlockHash"`
-	PreviousBlockHash string  `json:"previousBlockHash"`
-
+	Height            int    `json:"height"`
+	CurrentBlockHash  string `json:"currentBlockHash"`
+	PreviousBlockHash string `json:"previousBlockHash"`
 }
 
-//GetInterestedEvents implements consumer.EventAdapter interface for registering interested events
-func (a *adapter) GetInterestedEvents() ([]*pb.Interest, error) {
-	return []*pb.Interest{{EventType: pb.EventType_BLOCK}}, nil
-}
-
-//Recv implements consumer.EventAdapter interface for receiving events
-func (a *adapter) Recv(msg *pb.Event) (bool, error) {
-	switch msg.Event.(type) {
-	case *pb.Event_Block:
-		a.notfy <- msg.Event.(*pb.Event_Block)
-		return true, nil
-	default:
-		//a.notfy <- nil
-		return false, nil
-	}
-}
-
-//Disconnected implements consumer.EventAdapter interface for disconnecting
-func (a *adapter) Disconnected(err error) {
-	//fmt.Println(a.name)
-	//fmt.Println(a.addr)
-	os.Exit(1)
-}
-
-func createEventClient(name int, eventAddress string) *adapter {
-	var obcEHClient *consumer.EventsClient
-
-	done := make(chan *pb.Event_Block, CHAN_SIZE)
-	adapter := &adapter{name: name, addr: eventAddress, notfy: done}
-	obcEHClient = consumer.NewEventsClient(eventAddress, adapter)
-	if obcEHClient == nil {
-		return nil
-	}
-	if err := obcEHClient.Start(); err != nil {
-		fmt.Printf("could not start chat %s\n", err)
-		//obcEHClient.Stop()
-		return nil
-	}
-	return adapter
-}
+const TICKER = 1 * time.Second
 
 func main() {
 	var eventAddress0 string
@@ -106,10 +46,6 @@ func main() {
 	var restAddress1 string
 	var restAddress2 string
 	var restAddress3 string
-	var events0 int
-	var events1 int
-	var events2 int
-	var events3 int
 
 	flag.StringVar(&eventAddress0, "events-address0", "0.0.0.0:31315", "address of events server")
 	flag.StringVar(&eventAddress1, "events-address1", "0.0.0.1:31315", "address of events server")
@@ -133,95 +69,44 @@ func main() {
 	fmt.Printf("REST Address2: %s\n", restAddress2)
 	fmt.Printf("REST Address3: %s\n", restAddress3)
 
+	events0 := 0
+	events1 := 0
+	events2 := 0
+	events3 := 0
 
-	a := createEventClient(PEER0, eventAddress0)
-	b := createEventClient(PEER1, eventAddress1)
-	c := createEventClient(PEER2, eventAddress2)
-	d := createEventClient(PEER3, eventAddress3)
-	fan := make(chan *BlockEvent, 4*CHAN_SIZE)
+	printHeight(&events0, &events1, &events2, &events3)
 
-	events0 = 0
-	events1 = 0
-	events2 = 0
-	events3 = 0
-
-	initialHeight(&events0, restAddress0)
-	if a != nil {
-		go recvEvent(PEER0, a.notfy, fan)
-	}
-	initialHeight(&events1, restAddress1)
-	if b != nil {
-		go recvEvent(PEER1,  b.notfy, fan)
-	}
-	initialHeight(&events2, restAddress2)
-	if c != nil {
-		go recvEvent(PEER2, c.notfy, fan)
-	}
-	initialHeight(&events3, restAddress3)
-	if d != nil {
-		go recvEvent(PEER3, d.notfy, fan)
-	}
-
-
-	printHeight(events0, events1, events2, events3)
-
-	if a == nil || b == nil || c == nil || d == nil {
-		fmt.Printf("Error creating event client\n")
-		os.Exit(2)
-	}
+	timer := time.NewTicker(TICKER)
 
 	for {
-		event := <- fan
-		if event.peer == PEER0{
-			events0++
-			printHeight(events0, events1, events2, events3)
-			continue
-		}
-		if event.peer == PEER1{
-			events1++
-			printHeight(events0, events1, events2, events3)
-			continue
-		}
-		if event.peer == PEER2{
-			events2++
-			printHeight(events0, events1, events2, events3)
-			continue
-		}
-		if event.peer == PEER3{
-			events3++
-			printHeight(events0, events1, events2, events3)
-			continue
+		select {
+		case <-timer.C:
+			{
+				initialHeight(&events0, restAddress0)
+				initialHeight(&events1, restAddress1)
+				initialHeight(&events2, restAddress2)
+				initialHeight(&events3, restAddress3)
+				printHeight(&events0, &events1, &events2, &events3)
+			}
 		}
 
 	}
 
 }
 
-func recvEvent(peer int, in chan *pb.Event_Block, out chan *BlockEvent) {
-	for blockEvent := range in{
-		if blockEvent.Block.NonHashData.TransactionResults == nil {
-			//fmt.Printf("INVALID BLOCK ... NO TRANSACTION RESULTS %v\n", b)
-		} else {
-			out <- &BlockEvent{peer: peer}
-		}
-	}
-	fmt.Println("Goodbye World")
+func printHeight(events0, events1, events2, events3 *int) {
+	fmt.Printf("peers height: |%12d|, |%12d| ,|%12d|, |%12d|\n", *events0, *events1, *events2, *events3)
 }
 
-func printHeight(events0, events1, events2, events3 int) {
-	fmt.Printf("peers height: |%12d|, |%12d| ,|%12d|, |%12d|\n", events0, events1, events2, events3)
-}
-
-func initialHeight(events *int, addr string) (bool, error){
-	res, err := http.Get("http://"+addr+"/chain")
+func initialHeight(events *int, addr string) (bool, error) {
+	*events = 0
+	res, err := http.Get("http://" + addr + "/chain")
 	if err != nil {
-		fmt.Errorf("Couldn't get response from:" + addr)
 		return false, errors.New("Couldn't get response from:" + addr)
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Errorf("Couldn't read response body")
 		return false, errors.New("Couldn't read response body")
 	}
 	var response ChainResponse
