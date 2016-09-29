@@ -34,11 +34,14 @@
 | Id              | String, 每一头(批)肉牛有唯一的Id标识,由10位数字组成                                                        |
 | Vaccinated      | String, 用于记录肉牛接种信息,若为空则表示未进行过任何接种                                                    |
 | InsuranceID     | String, 用于记录肉牛的投保id,若id为空则代表未投保                                                          |
+|InsuranceCorp |String, 保险公司名称                                                                                        |
 | Loan            | Int, 记录此肉牛的贷款额                                                                                 |
 | LoanID          | String, 记录此肉牛的贷款id                                                                                |
+|LoanCorp      |String, 贷款机构名称
 | Origin          | String, 记录肉牛产地                                                                                   |
 | Trader          | String, 记录进口贸易商名称                                                                              |
 | Status          | Int, 用于记录肉牛在整个生命周期中所处的状态                                                                |
+| Owner          | String 用于记录肉牛的拥有者                                                                |
 
 此POC允许参与者参与到肉牛的整个生命周期中，包括肉牛的录入(创建)、在角色允许的情况下更新肉牛的各种信息和状态。
 
