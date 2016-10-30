@@ -1,0 +1,17 @@
+{
+	"appenders": [{
+		"type": "console"
+	},
+	{
+		"type": "dateFile",
+		"filename": "./logs/log",
+		"pattern": "_yyyy-MM-dd.txt",
+		"absolute": false,
+		"alwaysIncludePattern": true,
+		"category": "normal"
+	}],
+	"replaceConsole": true,
+	"levels": {
+		"normal": "DEBUG"
+	}
+}

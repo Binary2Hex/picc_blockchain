@@ -1,0 +1,136 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('monitoring:server');
+var http = require('http');
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(SYSTEM.ServicePort || '3000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
+
+
+// For logs
+var io = require('socket.io')(server);
+var processOutput = '';
+var subProcesses = [];
+
+io.on('connection', function(socket){
+    io.emit('running', subProcesses.length!=0);
+    socket.emit('stderr', {all: processOutput});
+    socket.on('stop', function(peer) {
+        subProcesses.forEach(function(process){
+            console.log('killing', process.pid);
+            process.kill();
+        });
+        io.emit('running', subProcesses.length!=0);
+    });
+    socket.on('start', startPeers);
+});
+
+var spawn = require('child_process').spawn;
+function startPeers() {
+    var cccfg = require('../config/chaincodeCfg.json');
+    cccfg.startCommands.forEach(function(commond) {
+        var child = spawn(commond.cmd, ['node', 'start'], {'cwd': commond.cwd});
+        child.stdout.on('data', function(data) {
+            console.log('Commond stdout output: ' + data);
+            processOutput += commond.name + ' => ' + data.toString();
+            io.emit('stdout', {delta: data.toString()});
+        });
+        child.stderr.on('data', function(data) {
+            console.log('Commond stderr output: ' + data);
+            processOutput += commond.name + ' => ' + data.toString();
+            io.emit('stderr', {delta: data.toString()});
+        });
+        child.on('close', function(code) {
+            if(subProcesses.indexOf(child) > -1) {
+                subProcesses.splice(subProcesses.indexOf(child), 1);
+            }
+            console.log('closing ', child.spawnfile, ', exit code:', code);
+        });
+        subProcesses.push(child);
+    });
+    io.emit('running', subProcesses.length!=0);
+}
+startPeers();

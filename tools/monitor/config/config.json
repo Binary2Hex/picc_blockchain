@@ -1,0 +1,6 @@
+{
+  "SYSTEM": {
+    "ServicePort": 8081,
+    "DevMode": false
+  }
+}

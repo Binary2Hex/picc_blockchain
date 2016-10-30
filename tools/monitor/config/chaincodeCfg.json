@@ -1,0 +1,26 @@
+{
+  "peers": [
+    {
+      "host": "localhost",
+      "APIPort": 5000
+    }
+  ],
+  "ChaincodeID": [
+    {
+      "name": "sycoin",
+      "hash": "2e1e406b90555f33068f7950318087b7f1b167701697c1ee4ae2ea30dc8920fc5f02aa0b747ddd0fbd74c515c8974867ed3462e23e3a3e5a34e71e2be3a5c0c3"
+    }
+  ],
+  "startCommands": [
+      {
+          "name": "vp0",
+          "cmd": "/home/vagrant/workspace/fabric-environ/vp0/peer",
+          "cwd": "/home/vagrant/workspace/fabric-environ/vp0/"
+      },
+      {
+          "name": "vp1",
+          "cmd": "/home/vagrant/workspace/fabric-environ/vp1/peer",
+          "cwd": "/home/vagrant/workspace/fabric-environ/vp1/"
+      }
+  ]
+}
