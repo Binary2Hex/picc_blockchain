@@ -1,5 +1,5 @@
 ## 如何搭建1 peer+ memberservice的环境用于chaincode开发(以chaincode-example02为例)
-在docker-compose目录下输入一条命令`docker-compose -f docker-compose-dev.yml`即可
+在docker-compose目录下输入一条命令`docker-compose -f docker-compose-dev.yml up`即可
 
 #### 登录admin到网络
 ```
