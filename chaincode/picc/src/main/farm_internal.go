@@ -3,25 +3,15 @@ package main
 import "github.com/hyperledger/fabric/core/chaincode/shim"
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/op/go-logging"
 	"strconv"
 )
 
 const (
-	FARM_TABLE    = "farm"
-	FARMCC_LOGGER = "FarmCC"
+	FARM_TABLE = "farm_table"
 )
 
-var ccLogger = logging.MustGetLogger(FARMCC_LOGGER)
-
-type colDef struct {
-	Name string
-	Type string
-}
-
-var farmColumnTypes = []colDef{
+var farmColumnTypes = []ColDef{
 	{"ID", "string"},
 	{"BASICINFO", "string"},
 	{"FUNDINGINFO", "string"},
@@ -31,33 +21,11 @@ var farmColumnTypes = []colDef{
 
 var farmColumnsKeys = []bool{true, false, false, false, false}
 
-func (f *MainCC) createFarmTable(stub *shim.ChaincodeStub) error {
-	farmColumns, err := generateColumns(farmColumnTypes, farmColumnsKeys)
-	if err != nil {
-		ccLogger.Error("Failed to generate columns for the farm table")
-		return errors.New("Failed to generate columns for the farm table")
-	}
-
-	err = stub.CreateTable(FARM_TABLE, farmColumns)
-	if err != nil {
-		ccLogger.Error(err)
-		//it's ok if the table already existed, recreate it
-		if table, err := stub.GetTable(FARM_TABLE); err == nil && table != nil {
-			stub.DeleteTable(FARM_TABLE)
-			err = stub.CreateTable(FARM_TABLE, farmColumns)
-			if err != nil {
-				ccLogger.Error(err)
-				return errors.New("failed to create farm table")
-			}
-		} else {
-			return errors.New("Unknown error creating farm table")
-		}
-	}
-	ccLogger.Info("Successfully created farm table")
-	return nil
+func createFarmTable(stub *shim.ChaincodeStub) error {
+	return createTable(stub, FARM_TABLE, farmColumnTypes, farmColumnsKeys)
 }
 
-func (f *MainCC) getFarmById(stub *shim.ChaincodeStub, id string) *Farm {
+func getFarmById(stub *shim.ChaincodeStub, id string) *Farm {
 	var columns []shim.Column
 	col := shim.Column{Value: &shim.Column_String_{String_: id}}
 	columns = append(columns, col)
@@ -75,7 +43,7 @@ func (f *MainCC) getFarmById(stub *shim.ChaincodeStub, id string) *Farm {
 	return farm
 }
 
-func (f *MainCC) getFarmAmount(stub *shim.ChaincodeStub) ([]byte, error) {
+func getFarmAmount(stub *shim.ChaincodeStub) ([]byte, error) {
 	// 或者用一个key来保存当前农场的数量，目前方式较繁琐
 	rowsChan, err := stub.GetRows(FARM_TABLE, []shim.Column{})
 	if err != nil {
@@ -144,21 +112,6 @@ func generateFarmRow(farm *Farm) []*shim.Column {
 		farmColumns = append(farmColumns, &shim.Column{Value: &shim.Column_String_{String_: farmVal[i]}})
 	}
 	return farmColumns
-}
-
-func generateColumns(colTypes []colDef, colKeys []bool) ([]*shim.ColumnDefinition, error) {
-	var tableColumns []*shim.ColumnDefinition
-	for i, k := range colTypes {
-		if k.Type == "string" {
-			tableColumns = append(tableColumns, &shim.ColumnDefinition{k.Name, shim.ColumnDefinition_STRING, colKeys[i]})
-		} else if k.Type == "bytes" {
-			tableColumns = append(tableColumns, &shim.ColumnDefinition{k.Name, shim.ColumnDefinition_BYTES, colKeys[i]})
-		} else if k.Type == "bool" {
-			tableColumns = append(tableColumns, &shim.ColumnDefinition{k.Name, shim.ColumnDefinition_BOOL, colKeys[i]})
-
-		}
-	}
-	return tableColumns, nil
 }
 
 func populateSampleFarmRows(stub *shim.ChaincodeStub) {

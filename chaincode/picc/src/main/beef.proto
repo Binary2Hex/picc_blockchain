@@ -1,0 +1,23 @@
+syntax = "proto3";
+package main;
+
+//记录肉牛明细
+message Beef {
+    string farm = 1; //养殖场ID
+    string farmer = 2;
+    int64 subsidy = 3; //政府补贴金额
+    int64 investFromFarmer = 4;
+    int64 investFromFarm = 5;
+    string earLabel = 6;
+    string age = 7;
+    string state = 8; //标的状态(在养/死亡/出栏)
+    string insuranceState = 9; //保险状态(未保/已保/已出险)
+    bool checked = 10; //是否验标
+
+    message Trace{ //溯源
+        string date = 1;
+        string event = 2;
+    }
+
+    repeated Trace trace = 11;
+}

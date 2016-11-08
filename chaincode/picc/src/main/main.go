@@ -5,16 +5,27 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/op/go-logging"
 )
 
 type MainCC struct {
 }
 
+const (
+	MAINCC_LOGGER = "MAIN_CHAINCODE_LOGGER"
+)
+
+var ccLogger = logging.MustGetLogger(MAINCC_LOGGER)
+
 func (t *MainCC) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	ccLogger.Debug("Init called!")
-	t.createFarmTable(stub)
+
+	createFarmTable(stub)
 	// for testing
 	populateSampleFarmRows(stub)
+
+	createBeefTable(stub)
+	populateSampleBeefRows(stub)
 
 	return nil, nil
 }
@@ -30,13 +41,18 @@ func (t *MainCC) Query(stub *shim.ChaincodeStub, function string, args []string)
 	if function == "getFarmById" {
 		var farm *Farm
 		if len(args) != 1 {
-			return nil, errors.New("args not match, need 1 arg as farm id")
+			return nil, errors.New("args not match for getFarmById, need 1 arg as farm id")
 		}
-		farm = t.getFarmById(stub, args[0])
+		farm = getFarmById(stub, args[0])
 		returnVal, _ := json.Marshal(farm)
 		return returnVal, nil
 	} else if function == "getFarmAmount" {
-		return t.getFarmAmount(stub)
+		return getFarmAmount(stub)
+	} else if function == "getAllBeevesByFarm" {
+		if len(args) != 1 {
+			return nil, errors.New("args not match for getAllBeevesByFarm, need 1 arg as farm id")
+		}
+		return getAllBeevesByFarm(stub, args[0])
 	}
 
 	ccLogger.Debug("function " + function + " not supported!")
