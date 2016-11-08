@@ -1,0 +1,24 @@
+syntax = "proto3";
+package main;
+
+message Farm {
+	string ID = 1;
+	message BasicInfo{
+		string owner = 1;
+		string addr = 2; //地址
+		string area = 3; //面积
+		string quantity = 4; //畜牧育量
+		string species = 5; //养殖物种
+	}
+
+	BasicInfo basicInfo = 2;
+
+	message FundingInfo{
+
+	}
+
+
+	repeated string cattleId = 3; //数组
+	repeated string insuranceId = 4;
+	repeated string loanId = 5;
+}
