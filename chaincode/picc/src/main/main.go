@@ -13,25 +13,8 @@ type MainCC struct {
 func (t *MainCC) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	ccLogger.Debug("Init called!")
 	t.createFarmTable(stub)
-
-	//new a farm and insert for testing...
-	farm := new(Farm)
-	farm.ID = "1234567"
-	basicInfo := new(Farm_BasicInfo)
-	basicInfo.Addr = "BEIJING"
-	basicInfo.Owner = "ALICE"
-	basicInfo.Area = "120"
-	basicInfo.Quantity = "2000"
-	basicInfo.Species = "cattle"
-	farm.BasicInfo = basicInfo
-	farm.CattleId = []string{"1234567_eartag0", "1234567_eartag1"}
-	farm.InsuranceId = []string{"insurance_id_xx0", "insurance_id_xx1"}
-	farm.LoanId = []string{"loan_id_xx0", "loan_id_xx1"}
-	stub.InsertRow(FARM_TABLE, shim.Row{Columns: generateFarmRow(farm)})
-	ccLogger.Debug("a new farm object inserted in farm table")
-	farm.ID = "1234568"
-	stub.InsertRow(FARM_TABLE, shim.Row{Columns: generateFarmRow(farm)})
-	ccLogger.Debug("another new farm object inserted in farm table")
+	// for testing
+	populateSampleFarmRows(stub)
 
 	return nil, nil
 }

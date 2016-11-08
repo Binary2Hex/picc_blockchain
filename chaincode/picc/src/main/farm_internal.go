@@ -24,9 +24,9 @@ type colDef struct {
 var farmColumnTypes = []colDef{
 	{"ID", "string"},
 	{"BASICINFO", "string"},
-	{"CATTLEID", "string"},
-	{"INSURANCEID", "string"},
-	{"LOANID", "string"},
+	{"FUNDINGINFO", "string"},
+	{"INVENTORY", "string"},
+	{"FEED", "string"},
 }
 
 var farmColumnsKeys = []bool{true, false, false, false, false}
@@ -109,20 +109,21 @@ func formatFarm(queryOutput shim.Row) *Farm {
 	}
 	farm.BasicInfo = basicInfo
 
-	err = json.Unmarshal([]byte(queryOutput.Columns[2].GetString_()), &farm.CattleId)
+	err = json.Unmarshal([]byte(queryOutput.Columns[2].GetString_()), &farm.FundingInfo)
 	if err != nil {
 		ccLogger.Info("Cannot un-marshal [%x]", queryOutput)
 	}
 
-	err = json.Unmarshal([]byte(queryOutput.Columns[3].GetString_()), &farm.InsuranceId)
+	err = json.Unmarshal([]byte(queryOutput.Columns[3].GetString_()), &farm.Inventory)
 	if err != nil {
 		ccLogger.Info("Cannot un-marshal [%x]", queryOutput)
 	}
 
-	err = json.Unmarshal([]byte(queryOutput.Columns[4].GetString_()), &farm.LoanId)
+	err = json.Unmarshal([]byte(queryOutput.Columns[4].GetString_()), &farm.Feed)
 	if err != nil {
 		ccLogger.Info("Cannot un-marshal [%x]", queryOutput)
 	}
+
 	return farm
 }
 
@@ -131,13 +132,13 @@ func generateFarmRow(farm *Farm) []*shim.Column {
 	var farmColumns []*shim.Column
 	farmVal = append(farmVal, farm.ID)
 	basicInfo, _ := json.Marshal(farm.BasicInfo)
-	cattleId, _ := json.Marshal(farm.CattleId)
-	insuranceId, _ := json.Marshal(farm.InsuranceId)
-	loanId, _ := json.Marshal(farm.LoanId)
+	fundingInfo, _ := json.Marshal(farm.FundingInfo)
+	inventory, _ := json.Marshal(farm.Inventory)
+	feed, _ := json.Marshal(farm.Feed)
 	farmVal = append(farmVal, string(basicInfo))
-	farmVal = append(farmVal, string(cattleId))
-	farmVal = append(farmVal, string(insuranceId))
-	farmVal = append(farmVal, string(loanId))
+	farmVal = append(farmVal, string(fundingInfo))
+	farmVal = append(farmVal, string(inventory))
+	farmVal = append(farmVal, string(feed))
 
 	for i := 0; i < len(farmVal); i++ {
 		farmColumns = append(farmColumns, &shim.Column{Value: &shim.Column_String_{String_: farmVal[i]}})
@@ -158,4 +159,61 @@ func generateColumns(colTypes []colDef, colKeys []bool) ([]*shim.ColumnDefinitio
 		}
 	}
 	return tableColumns, nil
+}
+
+func populateSampleFarmRows(stub *shim.ChaincodeStub) {
+	//new a farm and insert for testing...
+	farm := new(Farm)
+	farm.ID = "1234567"
+	basicInfo := new(Farm_BasicInfo)
+	basicInfo.Addr = "BEIJING"
+	basicInfo.Owner = "ALICE"
+	basicInfo.Area = "120"
+	basicInfo.Quantity = "2000"
+	basicInfo.Species = "cattle"
+	farm.BasicInfo = basicInfo
+
+	fundingInfo := new(Farm_FundingInfo)
+	fundingInfo.Outlay = "100"
+	fundingInfo.PaidIn = "1000"
+	fundingInfo.PovertyRelief = "12"
+	farm.FundingInfo = fundingInfo
+
+	inventory := new(Farm_Inventory)
+	inventory.AboveOne = 120
+	inventory.UnderOne = 230
+	inventory.Born = 12
+	inventory.Butchery = 40
+	inventory.Dead = 2
+	inventory.Import = 40
+	inventory.Init = 88
+	inventory.Insurance = 45
+	inventory.Year = 2016
+	inventory.Sell = 212
+	farm.Inventory = append(farm.Inventory, inventory)
+
+	feed2016 := new(Farm_Feed)
+	feed2016.Year = 2016
+	feed2016.Type1 = 120
+	feed2016.Type2 = 200
+	farm.Feed = append(farm.Feed, feed2016)
+	feed2015 := new(Farm_Feed)
+	feed2015.Year = 2015
+	feed2015.Type1 = 130
+	feed2015.Type2 = 210
+	farm.Feed = append(farm.Feed, feed2015)
+
+	inserted, ok := stub.InsertRow(FARM_TABLE, shim.Row{Columns: generateFarmRow(farm)})
+	if inserted {
+		ccLogger.Debug("a new farm object inserted in farm table")
+	} else if ok != nil {
+		ccLogger.Error("error inserting new row in farm table")
+	}
+	farm.ID = "1234568"
+	inserted, ok = stub.InsertRow(FARM_TABLE, shim.Row{Columns: generateFarmRow(farm)})
+	if inserted {
+		ccLogger.Debug("another new farm object inserted in farm table")
+	} else if ok != nil {
+		ccLogger.Error("error inserting new row in farm table")
+	}
 }

@@ -2,7 +2,7 @@ syntax = "proto3";
 package main;
 
 message Farm {
-	string ID = 1;
+
 	message BasicInfo{
 		string owner = 1;
 		string addr = 2; //地址
@@ -11,14 +11,42 @@ message Farm {
 		string species = 5; //养殖物种
 	}
 
-	BasicInfo basicInfo = 2;
-
 	message FundingInfo{
-
+		string totalAmount = 1; //项目总投入
+		string paidIn =2; //实际到位
+		string outlay = 3; //实际支出
+		string povertyRelief = 4; //扶贫人口
 	}
 
 
-	repeated string cattleId = 3; //数组
-	repeated string insuranceId = 4;
-	repeated string loanId = 5;
+	//存栏和出入栏信息--按年统计
+	message Inventory {
+		int32 year=1; //年份
+		int64 init=2; //当年初始存栏量
+		int64 import=3; //当年累计进口量
+		int64 born=4; //当年累计新生量
+		int64 butchery=5; //当年屠杀数量
+		int64 sell =6; //当年转卖量
+		int64 dead=7; //当年死亡
+		int64 insurance = 8;//当年当前投保数量
+		int64 underOne = 9; //0-1岁存栏量
+		int64 aboveOne = 10; //1岁以上存栏量
+	}
+
+	//养殖投料信息--按年统计
+	message Feed {//
+		int32 year=1;
+		int64 type1=2;
+		int64 type2=3;
+	}
+
+
+	string ID = 1;
+	BasicInfo 	basicInfo = 2;
+	FundingInfo fundingInfo = 3;
+	repeated Inventory inventory = 4;
+	repeated Feed feed = 5;
+
+	//养殖防疫信息和销售信息记录方式待定
+
 }
