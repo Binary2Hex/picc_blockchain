@@ -1,0 +1,16 @@
+syntax = "proto3";
+package main;
+
+message Loan {
+    string farm = 1;        //贷款方养殖场
+    string loanOfficer = 2; //贷款员
+    int64 amount = 3;       //贷款金额
+    string lendDate = 4;    //放贷时间
+    string repayDate = 5;   //还贷时间
+    message Trace {
+        string date = 1;
+        string event = 2;
+    }
+
+    repeated Trace trace = 6;//历史记录
+ }

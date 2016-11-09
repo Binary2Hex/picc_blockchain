@@ -30,6 +30,8 @@ func (t *MainCC) Init(stub *shim.ChaincodeStub, function string, args []string) 
 	createInsuranceTable(stub)
 	populateSampleInsuranceRows(stub)
 
+	createLoanTable(stub)
+	populateSampleLoanRows(stub)
 	return nil, nil
 }
 
@@ -61,6 +63,11 @@ func (t *MainCC) Query(stub *shim.ChaincodeStub, function string, args []string)
 			return nil, errors.New("args not match for getAllInsurancesByFarm, need 1 arg as farm id")
 		}
 		return getAllInsurancesByFarm(stub, args[0])
+	} else if function == "getAllLoansByFarm" {
+		if len(args) != 1 {
+			return nil, errors.New("args not match for getAllLoansByFarm, need 1 arg as farm id")
+		}
+		return getAllLoansByFarm(stub, args[0])
 	}
 
 	ccLogger.Debug("function " + function + " not supported!")
