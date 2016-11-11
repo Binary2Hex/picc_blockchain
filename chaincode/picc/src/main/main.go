@@ -58,6 +58,11 @@ func (t *MainCC) Query(stub *shim.ChaincodeStub, function string, args []string)
 			return nil, errors.New("args not match for getAllBeevesByFarm, need 1 arg as farm id")
 		}
 		return getAllBeevesByFarm(stub, args[0])
+	} else if function == "getBeefByFarmAndLabel" {
+		if len(args) != 2 {
+			return nil, errors.New("args not match for getBeefByFarmAndLabel, need 2 arg as farm id and ear label")
+		}
+		return getBeefByFarmAndLabel(stub, args)
 	} else if function == "getAllInsurancesByFarm" {
 		if len(args) != 1 {
 			return nil, errors.New("args not match for getAllInsurancesByFarm, need 1 arg as farm id")

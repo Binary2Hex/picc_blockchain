@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"strconv"
@@ -60,6 +61,26 @@ func getAllBeevesByFarm(stub *shim.ChaincodeStub, farmId string) ([]byte, error)
 	return returnVal, nil
 }
 
+func getBeefByFarmAndLabel(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	if len(args) != 2 {
+		return nil, errors.New("args length mismatch in getBeefByFarmAndLabel")
+	}
+	var columns []shim.Column
+	col0 := shim.Column{Value: &shim.Column_String_{String_: args[0]}}
+	col1 := shim.Column{Value: &shim.Column_String_{String_: args[1]}}
+	columns = append(columns, col0)
+	columns = append(columns, col1)
+	queryOutput, err := stub.GetRow(BEEF_TABLE, columns)
+	if err != nil {
+		ccLogger.Error(err)
+		return nil, err
+	} else if len(queryOutput.Columns) == 0 {
+		ccLogger.Debug("No beef found in farm:" + args[0] + " with ear label:" + args[1])
+		return nil, errors.New("No beef found in farm:" + args[0] + " with ear label:" + args[1])
+	}
+	beef := formatBeef(queryOutput)
+	return json.Marshal(beef)
+}
 func generateBeefRow(beef *Beef) []*shim.Column {
 
 	var beefColumns []*shim.Column
