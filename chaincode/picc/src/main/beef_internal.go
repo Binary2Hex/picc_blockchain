@@ -18,7 +18,7 @@ var beefColumnTypes = []ColDef{
 	{"SUBSIDY", "int64"},
 	{"INVEST_FROM_FARMER", "int64"},
 	{"INVEST_FROM_FARM", "int64"},
-	{"AGE", "string"},
+	{"BIRTHDAY", "string"},
 	{"STATE", "string"},
 	{"INSURANCE_STATE", "string"},
 	{"CHECKED", "bool"},
@@ -67,7 +67,7 @@ func generateBeefRow(beef *Beef) []*shim.Column {
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_Int64{Int64: beef.Subsidy}})
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_Int64{Int64: beef.InvestFromFarmer}})
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_Int64{Int64: beef.InvestFromFarm}})
-	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.Age}})
+	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.Birthday}})
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.State}})
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.InsuranceState}})
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_Bool{Bool: beef.Checked}})
@@ -85,7 +85,7 @@ func formatBeef(queryOutput shim.Row) *Beef {
 	beef.Subsidy = queryOutput.Columns[3].GetInt64()
 	beef.InvestFromFarmer = queryOutput.Columns[4].GetInt64()
 	beef.InvestFromFarm = queryOutput.Columns[5].GetInt64()
-	beef.Age = queryOutput.Columns[6].GetString_()
+	beef.Birthday = queryOutput.Columns[6].GetString_()
 	beef.State = queryOutput.Columns[7].GetString_()
 	beef.InsuranceState = queryOutput.Columns[8].GetString_()
 	beef.Checked = queryOutput.Columns[9].GetBool()
@@ -99,7 +99,7 @@ func formatBeef(queryOutput shim.Row) *Beef {
 
 func populateSampleBeefRows(stub *shim.ChaincodeStub) {
 	beef1 := Beef{}
-	beef1.Age = "0.5"
+	beef1.Birthday = "2015-02-11"
 	beef1.Checked = true
 	beef1.EarLabel = "Z5TC923U81"
 	beef1.Farm = "1234567"
