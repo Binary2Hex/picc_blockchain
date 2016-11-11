@@ -23,9 +23,11 @@ var beefColumnTypes = []ColDef{
 	{"INSURANCE_STATE", "string"},
 	{"CHECKED", "bool"},
 	{"TRACE", "bytes"},
+	{"SPECIES", "string"},
+	{"PHOTO_HASH", "string"},
 }
 
-var beefColumnsKeys = []bool{true, true, false, false, false, false, false, false, false, false, false}
+var beefColumnsKeys = []bool{true, true, false, false, false, false, false, false, false, false, false, false, false}
 
 func createBeefTable(stub *shim.ChaincodeStub) error {
 	return createTable(stub, BEEF_TABLE, beefColumnTypes, beefColumnsKeys)
@@ -73,6 +75,8 @@ func generateBeefRow(beef *Beef) []*shim.Column {
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_Bool{Bool: beef.Checked}})
 	traceMarshal, _ := json.Marshal(beef.Trace)
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_Bytes{Bytes: traceMarshal}})
+	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.Species}})
+	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.PhotoHash}})
 
 	return beefColumns
 }
@@ -94,6 +98,8 @@ func formatBeef(queryOutput shim.Row) *Beef {
 		ccLogger.Errorf("Cannot un-marshal [%x]", queryOutput)
 	}
 
+	beef.Species = queryOutput.Columns[11].GetString_()
+	beef.PhotoHash = queryOutput.Columns[12].GetString_()
 	return beef
 }
 
@@ -119,11 +125,15 @@ func populateSampleBeefRows(stub *shim.ChaincodeStub) {
 
 	beef1.Trace = append(beef1.Trace, trace10)
 	beef1.Trace = append(beef1.Trace, trace11)
+	beef1.Species = "Aceh"
+	beef1.PhotoHash = "AAAAB3NzaC1yc2EAAAADAQABAAABAQDp"
 
 	beef2 := beef1
 	beef2.EarLabel = "CB29AL2D91"
 	beef2.Farm = "1234568"
 	beef2.Farmer = "LISI"
+	beef2.Species = "German Angus Cattle"
+	beef2.PhotoHash = "YAja9pxorqAemKJO2aYqR4YUXE56uaEu"
 
 	inserted, ok := stub.InsertRow(BEEF_TABLE, shim.Row{Columns: generateBeefRow(&beef1)})
 	if inserted {

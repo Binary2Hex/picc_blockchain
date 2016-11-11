@@ -20,4 +20,6 @@ message Beef {
     }
 
     repeated Trace trace = 11;
+    string species = 12; //肉牛的品种
+    string photoHash = 13; //肉牛照片的hash值
 }
