@@ -48,7 +48,7 @@ func getAllInsurancesByFarm(stub *shim.ChaincodeStub, farmId string) ([]byte, er
 			break
 		}
 	}
-	ccLogger.Debug(strconv.Itoa(rows) + " insurances in total for farm:" + farmId)
+	ccLogger.Debug(strconv.Itoa(rows) + " insurance(s) in total for farm:" + farmId)
 	returnVal, _ := json.Marshal(insurances)
 	return returnVal, nil
 }

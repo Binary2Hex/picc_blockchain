@@ -55,7 +55,7 @@ func getAllBeevesByFarm(stub *shim.ChaincodeStub, farmId string) ([]byte, error)
 			break
 		}
 	}
-	ccLogger.Debug(strconv.Itoa(rows) + " beefs in total for farm:" + farmId)
+	ccLogger.Debug(strconv.Itoa(rows) + " beef/beeves in total for farm:" + farmId)
 	returnVal, _ := json.Marshal(beeves)
 	return returnVal, nil
 }
