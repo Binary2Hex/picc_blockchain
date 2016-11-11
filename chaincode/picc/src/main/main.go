@@ -20,7 +20,7 @@ var ccLogger = logging.MustGetLogger(MAINCC_LOGGER)
 func (t *MainCC) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	ccLogger.Debug("Init called!")
 
-	createFarmTable(stub)
+	createFarmTables(stub)
 	// for testing
 	populateSampleFarmRows(stub)
 
@@ -68,6 +68,11 @@ func (t *MainCC) Query(stub *shim.ChaincodeStub, function string, args []string)
 			return nil, errors.New("args not match for getAllLoansByFarm, need 1 arg as farm id")
 		}
 		return getAllLoansByFarm(stub, args[0])
+	} else if function == "getAllFarmIdsByCity" {
+		if len(args) != 2 {
+			return nil, errors.New("args not match for getAllFarmIdsByCity, need 2 args as province and city")
+		}
+		return getAllFarmIdsByCity(stub, args)
 	}
 
 	ccLogger.Debug("function " + function + " not supported!")

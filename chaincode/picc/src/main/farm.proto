@@ -5,10 +5,13 @@ message Farm {
 
 	message BasicInfo{
 		string owner = 1;
-		string addr = 2; //地址
-		string area = 3; //面积
-		string quantity = 4; //畜牧育量
-		string species = 5; //养殖物种
+		string name = 2; //养殖场名称
+		string province = 3;
+		string city = 4;
+		string addr = 5; //详细地址 or GPS?
+		string area = 6; //面积
+		string quantity = 7; //畜牧育量
+		string species = 8; //养殖物种
 	}
 
 	message FundingInfo{

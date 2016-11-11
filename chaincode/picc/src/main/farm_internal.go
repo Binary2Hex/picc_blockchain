@@ -1,14 +1,16 @@
 package main
 
-import "github.com/hyperledger/fabric/core/chaincode/shim"
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"strconv"
 )
 
 const (
-	FARM_TABLE = "farm_table"
+	FARM_TABLE                = "farm_table"
+	FARM_LOCATION_INDEX_TABLE = "farm_location_index_table"
 )
 
 var farmColumnTypes = []ColDef{
@@ -19,10 +21,21 @@ var farmColumnTypes = []ColDef{
 	{"FEED", "string"},
 }
 
-var farmColumnsKeys = []bool{true, false, false, false, false}
+var farmLocationIndexColumnTypes = []ColDef{
+	{"PROVINCE", "string"},
+	{"CITY", "string"},
+	{"FARM_NAME", "string"}, //同一城市中的养殖场不能重名
+	{"FARM_ID", "string"},
+}
 
-func createFarmTable(stub *shim.ChaincodeStub) error {
-	return createTable(stub, FARM_TABLE, farmColumnTypes, farmColumnsKeys)
+var farmColumnsKeys = []bool{true, false, false, false, false}
+var farmLocationIndexColumnKeys = []bool{true, true, true, false}
+
+func createFarmTables(stub *shim.ChaincodeStub) error {
+	if err := createTable(stub, FARM_TABLE, farmColumnTypes, farmColumnsKeys); err != nil {
+		return err
+	}
+	return createTable(stub, FARM_LOCATION_INDEX_TABLE, farmLocationIndexColumnTypes, farmLocationIndexColumnKeys)
 }
 
 func getFarmById(stub *shim.ChaincodeStub, id string) *Farm {
@@ -65,6 +78,41 @@ func getFarmAmount(stub *shim.ChaincodeStub) ([]byte, error) {
 	}
 	ccLogger.Debug(strconv.Itoa(rows) + " farms in total")
 	return []byte(strconv.Itoa(rows)), nil
+}
+
+func getAllFarmIdsByCity(stub *shim.ChaincodeStub, location []string) ([]byte, error) {
+	if len(location) != 2 {
+		return nil, errors.New("args length mismatch in getAllFarmsIdsByCity")
+	}
+	columns := []shim.Column{}
+	col0 := shim.Column{Value: &shim.Column_String_{String_: location[0]}}
+	col1 := shim.Column{Value: &shim.Column_String_{String_: location[1]}}
+	columns = append(columns, col0)
+	columns = append(columns, col1)
+
+	rowsChan, err := stub.GetRows(FARM_LOCATION_INDEX_TABLE, columns)
+	if err != nil {
+		ccLogger.Error(err)
+		return nil, err
+	}
+	rows := 0
+	returnStr := []string{}
+	for {
+		select {
+		case row, ok := <-rowsChan:
+			if !ok {
+				rowsChan = nil
+			} else {
+				rows++
+				returnStr = append(returnStr, row.Columns[3].GetString_())
+			}
+		}
+		if rowsChan == nil {
+			break
+		}
+	}
+	ccLogger.Debug(strconv.Itoa(rows) + " farms in total in " + location[0] + ", " + location[1])
+	return json.Marshal(returnStr)
 }
 
 func formatFarm(queryOutput shim.Row) *Farm {
@@ -114,12 +162,29 @@ func generateFarmRow(farm *Farm) []*shim.Column {
 	return farmColumns
 }
 
+func generateFarmLocationIndexRow(province, city, name, id string) []*shim.Column {
+	var farmLocationIndexVal []string
+	var farmLocationIndexColumns []*shim.Column
+	farmLocationIndexVal = append(farmLocationIndexVal, province)
+	farmLocationIndexVal = append(farmLocationIndexVal, city)
+	farmLocationIndexVal = append(farmLocationIndexVal, name)
+	farmLocationIndexVal = append(farmLocationIndexVal, id)
+
+	for i := 0; i < len(farmLocationIndexVal); i++ {
+		farmLocationIndexColumns = append(farmLocationIndexColumns, &shim.Column{Value: &shim.Column_String_{String_: farmLocationIndexVal[i]}})
+	}
+	return farmLocationIndexColumns
+}
+
 func populateSampleFarmRows(stub *shim.ChaincodeStub) {
 	//new a farm and insert for testing...
 	farm := new(Farm)
 	farm.ID = "1234567"
 	basicInfo := new(Farm_BasicInfo)
-	basicInfo.Addr = "BEIJING"
+	basicInfo.Name = "承德第一肉牛养殖场"
+	basicInfo.Province = "HEBEI"
+	basicInfo.City = "CHENGDE"
+	basicInfo.Addr = "xxx street ###, GPS: {41.231, 117.234}"
 	basicInfo.Owner = "ALICE"
 	basicInfo.Area = "120"
 	basicInfo.Quantity = "2000"
@@ -162,11 +227,25 @@ func populateSampleFarmRows(stub *shim.ChaincodeStub) {
 	} else if ok != nil {
 		ccLogger.Error("error inserting new row in farm table")
 	}
+	inserted, ok = stub.InsertRow(FARM_LOCATION_INDEX_TABLE, shim.Row{Columns: generateFarmLocationIndexRow(farm.BasicInfo.Province, farm.BasicInfo.City, farm.BasicInfo.Name, farm.ID)})
+	if inserted {
+		ccLogger.Debug("a new row inserted in farm location index table")
+	} else if ok != nil {
+		ccLogger.Error("error inserting new row in farm location index table")
+	}
+
 	farm.ID = "1234568"
+	farm.BasicInfo.Name = "承德第二肉牛养殖场"
 	inserted, ok = stub.InsertRow(FARM_TABLE, shim.Row{Columns: generateFarmRow(farm)})
 	if inserted {
 		ccLogger.Debug("another new farm object inserted in farm table")
 	} else if ok != nil {
 		ccLogger.Error("error inserting new row in farm table")
+	}
+	inserted, ok = stub.InsertRow(FARM_LOCATION_INDEX_TABLE, shim.Row{Columns: generateFarmLocationIndexRow(farm.BasicInfo.Province, farm.BasicInfo.City, farm.BasicInfo.Name, farm.ID)})
+	if inserted {
+		ccLogger.Debug("a new row inserted in farm location index table")
+	} else if ok != nil {
+		ccLogger.Error("error inserting new row in farm location index table")
 	}
 }
