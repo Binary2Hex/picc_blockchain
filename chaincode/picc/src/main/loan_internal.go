@@ -94,6 +94,7 @@ func getAllLoanIdByLender(stub *shim.ChaincodeStub, lenderId string) ([]byte, er
 func generateLoanRow(loan *Loan) []*shim.Column {
 	var loanColumns []*shim.Column
 	loanColumns = append(loanColumns, &shim.Column{Value: &shim.Column_String_{String_: loan.Farm}})
+	loanColumns = append(loanColumns, &shim.Column{Value: &shim.Column_String_{String_: loan.LoanId}})
 	loanColumns = append(loanColumns, &shim.Column{Value: &shim.Column_String_{String_: loan.LendDate}})
 	loanColumns = append(loanColumns, &shim.Column{Value: &shim.Column_String_{String_: loan.LoanOfficer}})
 	loanColumns = append(loanColumns, &shim.Column{Value: &shim.Column_Int64{Int64: loan.Amount}})
@@ -114,11 +115,12 @@ func generateLenderRow(loanOfficer, farm, loanId string) []*shim.Column {
 func formatLoan(queryOutput shim.Row) *Loan {
 	loan := new(Loan)
 	loan.Farm = queryOutput.Columns[0].GetString_()
-	loan.LendDate = queryOutput.Columns[1].GetString_()
-	loan.LoanOfficer = queryOutput.Columns[2].GetString_()
-	loan.Amount = queryOutput.Columns[3].GetInt64()
-	loan.RepayDate = queryOutput.Columns[4].GetString_()
-	json.Unmarshal(queryOutput.Columns[5].GetBytes(), &loan.Trace)
+	loan.LoanId = queryOutput.Columns[1].GetString_()
+	loan.LendDate = queryOutput.Columns[2].GetString_()
+	loan.LoanOfficer = queryOutput.Columns[3].GetString_()
+	loan.Amount = queryOutput.Columns[4].GetInt64()
+	loan.RepayDate = queryOutput.Columns[5].GetString_()
+	json.Unmarshal(queryOutput.Columns[6].GetBytes(), &loan.Trace)
 	return loan
 }
 
