@@ -46,13 +46,25 @@ message Farm {
 		int64 type2=3;
 	}
 
+	//记录免疫信息，由防疫站直接写入..不需要统计信息
+	message Vaccination {
+		//免疫实施率
+		message VaccinationRate {
+			string type = 1; //免疫种类
+			string rate = 2;
+		}
+		repeated VaccinationRate vaccinationRate = 1;
+		string earLabelMatchRate = 2;
+	}
+
 
 	string ID = 1;
 	BasicInfo 	basicInfo = 2;
 	FundingInfo fundingInfo = 3;
 	repeated Inventory inventory = 4;
 	repeated Feed feed = 5;
+	Vaccination vaccination = 6;
 
-	//养殖防疫信息和销售信息记录方式待定
+	//养殖销售信息记录方式待定
 
 }

@@ -19,6 +19,7 @@ var farmColumnTypes = []ColDef{
 	{"FUNDINGINFO", "string"},
 	{"INVENTORY", "string"},
 	{"FEED", "string"},
+	{"VACCINATION", "string"},
 }
 
 var farmLocationIndexColumnTypes = []ColDef{
@@ -28,7 +29,7 @@ var farmLocationIndexColumnTypes = []ColDef{
 	{"FARM_ID", "string"},
 }
 
-var farmColumnsKeys = []bool{true, false, false, false, false}
+var farmColumnsKeys = []bool{true, false, false, false, false, false}
 var farmLocationIndexColumnKeys = []bool{true, true, true, false}
 
 func createFarmTables(stub *shim.ChaincodeStub) error {
@@ -140,6 +141,11 @@ func formatFarm(queryOutput shim.Row) *Farm {
 		ccLogger.Info("Cannot un-marshal [%x]", queryOutput)
 	}
 
+	err = json.Unmarshal([]byte(queryOutput.Columns[5].GetString_()), &farm.Vaccination)
+	if err != nil {
+		ccLogger.Info("Cannot un-marshal [%x]", queryOutput)
+	}
+
 	return farm
 }
 
@@ -151,10 +157,12 @@ func generateFarmRow(farm *Farm) []*shim.Column {
 	fundingInfo, _ := json.Marshal(farm.FundingInfo)
 	inventory, _ := json.Marshal(farm.Inventory)
 	feed, _ := json.Marshal(farm.Feed)
+	vaccination, _ := json.Marshal(farm.Vaccination)
 	farmVal = append(farmVal, string(basicInfo))
 	farmVal = append(farmVal, string(fundingInfo))
 	farmVal = append(farmVal, string(inventory))
 	farmVal = append(farmVal, string(feed))
+	farmVal = append(farmVal, string(vaccination))
 
 	for i := 0; i < len(farmVal); i++ {
 		farmColumns = append(farmColumns, &shim.Column{Value: &shim.Column_String_{String_: farmVal[i]}})
@@ -223,6 +231,18 @@ func populateSampleFarmRows(stub *shim.ChaincodeStub) {
 	feed2015.Type1 = 130
 	feed2015.Type2 = 210
 	farm.Feed = append(farm.Feed, feed2015)
+
+	vaccination := new(Farm_Vaccination)
+	vaccinationRate1 := Farm_Vaccination_VaccinationRate{}
+	vaccinationRate1.Type = "vaccination type 1"
+	vaccinationRate1.Rate = "99.2"
+	vaccinationRate2 := Farm_Vaccination_VaccinationRate{}
+	vaccinationRate2.Type = "vaccination type 2"
+	vaccinationRate2.Rate = "89.6"
+	vaccination.VaccinationRate = append(vaccination.VaccinationRate, &vaccinationRate1)
+	vaccination.VaccinationRate = append(vaccination.VaccinationRate, &vaccinationRate2)
+
+	farm.Vaccination = vaccination
 
 	inserted, ok := stub.InsertRow(FARM_TABLE, shim.Row{Columns: generateFarmRow(farm)})
 	if inserted {
