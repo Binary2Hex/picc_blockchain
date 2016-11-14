@@ -57,6 +57,18 @@ message Farm {
 		string earLabelMatchRate = 2;
 	}
 
+    //记录销售信息，不需要按年统计，由屠宰场直接写入；
+    //为保持历史信息，这里用数组记录
+
+    message Sale {
+        string date = 1;
+        int64 amount = 2; //屠宰头数
+        string earLabelMatchRate = 3;
+        string totalBeefAmount = 4; //总出肉量
+        string beefRatio = 5; //出肉率
+        string marbledRatio = 6; //雪花比例
+        int64 resellAmount = 7; //转卖头数
+    }
 
 	string ID = 1;
 	BasicInfo 	basicInfo = 2;
@@ -64,7 +76,6 @@ message Farm {
 	repeated Inventory inventory = 4;
 	repeated Feed feed = 5;
 	Vaccination vaccination = 6;
-
-	//养殖销售信息记录方式待定
+    repeated Sale sale = 7;
 
 }

@@ -20,6 +20,7 @@ var farmColumnTypes = []ColDef{
 	{"INVENTORY", "string"},
 	{"FEED", "string"},
 	{"VACCINATION", "string"},
+	{"SALE", "string"},
 }
 
 var farmLocationIndexColumnTypes = []ColDef{
@@ -29,7 +30,7 @@ var farmLocationIndexColumnTypes = []ColDef{
 	{"FARM_ID", "string"},
 }
 
-var farmColumnsKeys = []bool{true, false, false, false, false, false}
+var farmColumnsKeys = []bool{true, false, false, false, false, false, false}
 var farmLocationIndexColumnKeys = []bool{true, true, true, false}
 
 func createFarmTables(stub *shim.ChaincodeStub) error {
@@ -146,6 +147,11 @@ func formatFarm(queryOutput shim.Row) *Farm {
 		ccLogger.Info("Cannot un-marshal [%x]", queryOutput)
 	}
 
+	err = json.Unmarshal([]byte(queryOutput.Columns[6].GetString_()), &farm.Sale)
+	if err != nil {
+		ccLogger.Info("Cannot un-marshal [%x]", queryOutput)
+	}
+
 	return farm
 }
 
@@ -158,11 +164,13 @@ func generateFarmRow(farm *Farm) []*shim.Column {
 	inventory, _ := json.Marshal(farm.Inventory)
 	feed, _ := json.Marshal(farm.Feed)
 	vaccination, _ := json.Marshal(farm.Vaccination)
+	sale, _ := json.Marshal(farm.Sale)
 	farmVal = append(farmVal, string(basicInfo))
 	farmVal = append(farmVal, string(fundingInfo))
 	farmVal = append(farmVal, string(inventory))
 	farmVal = append(farmVal, string(feed))
 	farmVal = append(farmVal, string(vaccination))
+	farmVal = append(farmVal, string(sale))
 
 	for i := 0; i < len(farmVal); i++ {
 		farmColumns = append(farmColumns, &shim.Column{Value: &shim.Column_String_{String_: farmVal[i]}})
@@ -243,6 +251,21 @@ func populateSampleFarmRows(stub *shim.ChaincodeStub) {
 	vaccination.VaccinationRate = append(vaccination.VaccinationRate, &vaccinationRate2)
 
 	farm.Vaccination = vaccination
+
+	sale0 := Farm_Sale{}
+	sale0.Date = "2016-01-23"
+	sale0.Amount = 500
+	sale0.EarLabelMatchRate = "100"
+	sale0.TotalBeefAmount = "75000kg"
+	sale0.BeefRatio = "35.2"
+	sale0.MarbledRatio = "23.2"
+	sale0.ResellAmount = 47
+
+	sale1 := sale0
+	sale1.Date = "2016-04-11"
+	sale1.Amount = 345
+	farm.Sale = append(farm.Sale, &sale0)
+	farm.Sale = append(farm.Sale, &sale1)
 
 	inserted, ok := stub.InsertRow(FARM_TABLE, shim.Row{Columns: generateFarmRow(farm)})
 	if inserted {
