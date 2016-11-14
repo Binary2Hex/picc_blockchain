@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -144,6 +145,45 @@ func getAllFarmIdsByProvince(stub *shim.ChaincodeStub, province string) ([]byte,
 		}
 	}
 	ccLogger.Debug(strconv.Itoa(rows) + " farms in total in " + province)
+	return json.Marshal(returnStr)
+}
+
+func getAllFarmIdsByName(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	if len(args) != 3 {
+		return nil, errors.New("args length mismatch in getAllFarmIdsByName")
+	}
+	columns := []shim.Column{}
+	province := shim.Column{Value: &shim.Column_String_{String_: args[0]}}
+	city := shim.Column{Value: &shim.Column_String_{String_: args[1]}}
+	name := args[2]
+
+	columns = append(columns, province)
+	columns = append(columns, city)
+
+	rowsChan, err := stub.GetRows(FARM_LOCATION_INDEX_TABLE, columns)
+	if err != nil {
+		ccLogger.Error(err)
+		return nil, err
+	}
+	rows := 0
+	returnStr := []string{}
+	for {
+		select {
+		case row, ok := <-rowsChan:
+			if !ok {
+				rowsChan = nil
+			} else {
+				if strings.Contains(row.Columns[2].GetString_(), name) {
+					rows++
+					returnStr = append(returnStr, row.Columns[3].GetString_())
+				}
+			}
+		}
+		if rowsChan == nil {
+			break
+		}
+	}
+	ccLogger.Debug(strconv.Itoa(rows) + " farm(s) in total in " + args[0] + ", " + args[1] + " with name " + name)
 	return json.Marshal(returnStr)
 }
 

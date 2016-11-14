@@ -83,6 +83,11 @@ func (t *MainCC) Query(stub *shim.ChaincodeStub, function string, args []string)
 			return nil, errors.New("args not match for getAllFarmIdsByProvince, need 1 arg as province")
 		}
 		return getAllFarmIdsByProvince(stub, args[0])
+	} else if function == "getAllFarmIdsByName" {
+		if len(args) != 3 {
+			return nil, errors.New("args not match for getAllFarmIdsByName, need 3 args as province, city and farm name")
+		}
+		return getAllFarmIdsByName(stub, args)
 	}
 
 	ccLogger.Debug("function " + function + " not supported!")
