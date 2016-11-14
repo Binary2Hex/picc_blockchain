@@ -18,9 +18,11 @@ var insuranceColumnTypes = []ColDef{
 	{"END_DATE", "string"},
 	{"CHECKED", "bool"},
 	{"DETAILS", "string"},
+	{"AMOUNT_INSURED", "int64"},
+	{"AMOUNT_LOSS", "int64"},
 }
 
-var insuranceColumnsKeys = []bool{true, true, false, false, false, false}
+var insuranceColumnsKeys = []bool{true, true, false, false, false, false, false, false}
 
 func createInsuranceTable(stub *shim.ChaincodeStub) error {
 	return createTable(stub, INSURANCE_TABLE, insuranceColumnTypes, insuranceColumnsKeys)
@@ -61,6 +63,8 @@ func generateInsuranceRow(insurance *Insurance) []*shim.Column {
 	insuranceColumns = append(insuranceColumns, &shim.Column{Value: &shim.Column_String_{String_: insurance.EndDate}})
 	insuranceColumns = append(insuranceColumns, &shim.Column{Value: &shim.Column_Bool{Bool: insurance.Checked}})
 	insuranceColumns = append(insuranceColumns, &shim.Column{Value: &shim.Column_String_{String_: insurance.Details}})
+	insuranceColumns = append(insuranceColumns, &shim.Column{Value: &shim.Column_Int64{Int64: insurance.AmountInsured}})
+	insuranceColumns = append(insuranceColumns, &shim.Column{Value: &shim.Column_Int64{Int64: insurance.AmountLoss}})
 	return insuranceColumns
 }
 
@@ -72,6 +76,8 @@ func formatInsurance(queryOutput shim.Row) *Insurance {
 	insurance.EndDate = queryOutput.Columns[3].GetString_()
 	insurance.Checked = queryOutput.Columns[4].GetBool()
 	insurance.Details = queryOutput.Columns[5].GetString_()
+	insurance.AmountInsured = queryOutput.Columns[6].GetInt64()
+	insurance.AmountLoss = queryOutput.Columns[7].GetInt64()
 	return insurance
 }
 
@@ -83,6 +89,8 @@ func populateSampleInsuranceRows(stub *shim.ChaincodeStub) {
 	insurance.EndDate = "2016-09-12"
 	insurance.Checked = true
 	insurance.Details = "all checked"
+	insurance.AmountInsured = 500
+	insurance.AmountLoss = 0
 	stub.InsertRow(INSURANCE_TABLE, shim.Row{Columns: generateInsuranceRow(&insurance)})
 
 	insurance.Number = "PXAL12L4KS2K"
@@ -92,6 +100,8 @@ func populateSampleInsuranceRows(stub *shim.ChaincodeStub) {
 	insurance.Number = "XK2SKS91AS5K"
 	insurance.StartDate = "2016-05-23"
 	insurance.EndDate = "2016-11-23"
+	insurance.AmountInsured = 700
+	insurance.AmountLoss = 8
 	stub.InsertRow(INSURANCE_TABLE, shim.Row{Columns: generateInsuranceRow(&insurance)})
 
 }
