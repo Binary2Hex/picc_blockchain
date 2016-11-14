@@ -117,6 +117,36 @@ func getAllFarmIdsByCity(stub *shim.ChaincodeStub, location []string) ([]byte, e
 	return json.Marshal(returnStr)
 }
 
+func getAllFarmIdsByProvince(stub *shim.ChaincodeStub, province string) ([]byte, error) {
+	columns := []shim.Column{}
+	col := shim.Column{Value: &shim.Column_String_{String_: province}} // search by province name
+	columns = append(columns, col)
+
+	rowsChan, err := stub.GetRows(FARM_LOCATION_INDEX_TABLE, columns)
+	if err != nil {
+		ccLogger.Error(err)
+		return nil, err
+	}
+	rows := 0
+	returnStr := []string{}
+	for {
+		select {
+		case row, ok := <-rowsChan:
+			if !ok {
+				rowsChan = nil
+			} else {
+				rows++
+				returnStr = append(returnStr, row.Columns[3].GetString_())
+			}
+		}
+		if rowsChan == nil {
+			break
+		}
+	}
+	ccLogger.Debug(strconv.Itoa(rows) + " farms in total in " + province)
+	return json.Marshal(returnStr)
+}
+
 func formatFarm(queryOutput shim.Row) *Farm {
 	farm := &Farm{}
 	farm.ID = queryOutput.Columns[0].GetString_()
