@@ -13,4 +13,5 @@ message Loan {
     }
 
     repeated Trace trace = 6;//历史记录
+    string loanId = 7;
  }

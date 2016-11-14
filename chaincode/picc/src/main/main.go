@@ -30,7 +30,7 @@ func (t *MainCC) Init(stub *shim.ChaincodeStub, function string, args []string) 
 	createInsuranceTable(stub)
 	populateSampleInsuranceRows(stub)
 
-	createLoanTable(stub)
+	createLoanTables(stub)
 	populateSampleLoanRows(stub)
 	return nil, nil
 }
@@ -88,6 +88,11 @@ func (t *MainCC) Query(stub *shim.ChaincodeStub, function string, args []string)
 			return nil, errors.New("args not match for getAllFarmIdsByName, need 3 args as province, city and farm name")
 		}
 		return getAllFarmIdsByName(stub, args)
+	} else if function == "getAllLoanIdByLender" {
+		if len(args) != 1 {
+			return nil, errors.New("args not match for getAllLoanIdByLender, need 1 arg as loan officer id")
+		}
+		return getAllLoanIdByLender(stub, args[0])
 	}
 
 	ccLogger.Debug("function " + function + " not supported!")
