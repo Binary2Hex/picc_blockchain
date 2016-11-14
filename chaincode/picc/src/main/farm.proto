@@ -15,10 +15,13 @@ message Farm {
 	}
 
 	message FundingInfo{
-		string totalAmount = 1; //项目总投入
-		string paidIn =2; //实际到位
-		string outlay = 3; //实际支出
-		string povertyRelief = 4; //扶贫人口
+		int64 totalAmount = 1; //项目总投入
+		int64 paidIn =2; //实际到位
+		int64 outlay = 3; //实际支出
+		int64 povertyRelief = 4; //扶贫人口
+		string creditRating = 5; //信用评级
+		int64 registeredCapital = 6; //注册资本
+		int64 registeredAsset = 7; //注册资产
 	}
 
 

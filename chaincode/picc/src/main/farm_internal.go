@@ -192,9 +192,12 @@ func populateSampleFarmRows(stub *shim.ChaincodeStub) {
 	farm.BasicInfo = basicInfo
 
 	fundingInfo := new(Farm_FundingInfo)
-	fundingInfo.Outlay = "100"
-	fundingInfo.PaidIn = "1000"
-	fundingInfo.PovertyRelief = "12"
+	fundingInfo.Outlay = 100
+	fundingInfo.PaidIn = 1000
+	fundingInfo.PovertyRelief = 12
+	fundingInfo.CreditRating = "GOOD"
+	fundingInfo.RegisteredCapital = 120000
+	fundingInfo.RegisteredAsset = 300000
 	farm.FundingInfo = fundingInfo
 
 	inventory := new(Farm_Inventory)
