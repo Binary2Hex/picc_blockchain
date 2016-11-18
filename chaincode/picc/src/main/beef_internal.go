@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"strconv"
@@ -18,14 +19,16 @@ var beefColumnTypes = []ColDef{
 	{"SUBSIDY", "int64"},
 	{"INVEST_FROM_FARMER", "int64"},
 	{"INVEST_FROM_FARM", "int64"},
-	{"AGE", "string"},
+	{"BIRTHDAY", "string"},
 	{"STATE", "string"},
 	{"INSURANCE_STATE", "string"},
 	{"CHECKED", "bool"},
 	{"TRACE", "bytes"},
+	{"SPECIES", "string"},
+	{"PHOTO_HASH", "string"},
 }
 
-var beefColumnsKeys = []bool{true, true, false, false, false, false, false, false, false, false, false}
+var beefColumnsKeys = []bool{true, true, false, false, false, false, false, false, false, false, false, false, false}
 
 func createBeefTable(stub *shim.ChaincodeStub) error {
 	return createTable(stub, BEEF_TABLE, beefColumnTypes, beefColumnsKeys)
@@ -53,11 +56,31 @@ func getAllBeevesByFarm(stub *shim.ChaincodeStub, farmId string) ([]byte, error)
 			break
 		}
 	}
-	ccLogger.Debug(strconv.Itoa(rows) + " beefs in total for farm:" + farmId)
+	ccLogger.Debug(strconv.Itoa(rows) + " beef/beeves in total for farm:" + farmId)
 	returnVal, _ := json.Marshal(beeves)
 	return returnVal, nil
 }
 
+func getBeefByFarmAndLabel(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	if len(args) != 2 {
+		return nil, errors.New("args length mismatch in getBeefByFarmAndLabel")
+	}
+	var columns []shim.Column
+	col0 := shim.Column{Value: &shim.Column_String_{String_: args[0]}}
+	col1 := shim.Column{Value: &shim.Column_String_{String_: args[1]}}
+	columns = append(columns, col0)
+	columns = append(columns, col1)
+	queryOutput, err := stub.GetRow(BEEF_TABLE, columns)
+	if err != nil {
+		ccLogger.Error(err)
+		return nil, err
+	} else if len(queryOutput.Columns) == 0 {
+		ccLogger.Debug("No beef found in farm:" + args[0] + " with ear label:" + args[1])
+		return nil, errors.New("No beef found in farm:" + args[0] + " with ear label:" + args[1])
+	}
+	beef := formatBeef(queryOutput)
+	return json.Marshal(beef)
+}
 func generateBeefRow(beef *Beef) []*shim.Column {
 
 	var beefColumns []*shim.Column
@@ -67,12 +90,14 @@ func generateBeefRow(beef *Beef) []*shim.Column {
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_Int64{Int64: beef.Subsidy}})
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_Int64{Int64: beef.InvestFromFarmer}})
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_Int64{Int64: beef.InvestFromFarm}})
-	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.Age}})
+	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.Birthday}})
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.State}})
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.InsuranceState}})
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_Bool{Bool: beef.Checked}})
 	traceMarshal, _ := json.Marshal(beef.Trace)
 	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_Bytes{Bytes: traceMarshal}})
+	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.Species}})
+	beefColumns = append(beefColumns, &shim.Column{Value: &shim.Column_String_{String_: beef.PhotoHash}})
 
 	return beefColumns
 }
@@ -85,7 +110,7 @@ func formatBeef(queryOutput shim.Row) *Beef {
 	beef.Subsidy = queryOutput.Columns[3].GetInt64()
 	beef.InvestFromFarmer = queryOutput.Columns[4].GetInt64()
 	beef.InvestFromFarm = queryOutput.Columns[5].GetInt64()
-	beef.Age = queryOutput.Columns[6].GetString_()
+	beef.Birthday = queryOutput.Columns[6].GetString_()
 	beef.State = queryOutput.Columns[7].GetString_()
 	beef.InsuranceState = queryOutput.Columns[8].GetString_()
 	beef.Checked = queryOutput.Columns[9].GetBool()
@@ -94,12 +119,14 @@ func formatBeef(queryOutput shim.Row) *Beef {
 		ccLogger.Errorf("Cannot un-marshal [%x]", queryOutput)
 	}
 
+	beef.Species = queryOutput.Columns[11].GetString_()
+	beef.PhotoHash = queryOutput.Columns[12].GetString_()
 	return beef
 }
 
 func populateSampleBeefRows(stub *shim.ChaincodeStub) {
 	beef1 := Beef{}
-	beef1.Age = "0.5"
+	beef1.Birthday = "2015-02-11"
 	beef1.Checked = true
 	beef1.EarLabel = "Z5TC923U81"
 	beef1.Farm = "1234567"
@@ -119,11 +146,15 @@ func populateSampleBeefRows(stub *shim.ChaincodeStub) {
 
 	beef1.Trace = append(beef1.Trace, trace10)
 	beef1.Trace = append(beef1.Trace, trace11)
+	beef1.Species = "Aceh"
+	beef1.PhotoHash = "AAAAB3NzaC1yc2EAAAADAQABAAABAQDp"
 
 	beef2 := beef1
 	beef2.EarLabel = "CB29AL2D91"
 	beef2.Farm = "1234568"
 	beef2.Farmer = "LISI"
+	beef2.Species = "German Angus Cattle"
+	beef2.PhotoHash = "YAja9pxorqAemKJO2aYqR4YUXE56uaEu"
 
 	inserted, ok := stub.InsertRow(BEEF_TABLE, shim.Row{Columns: generateBeefRow(&beef1)})
 	if inserted {

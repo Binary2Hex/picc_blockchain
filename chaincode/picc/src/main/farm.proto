@@ -5,17 +5,23 @@ message Farm {
 
 	message BasicInfo{
 		string owner = 1;
-		string addr = 2; //地址
-		string area = 3; //面积
-		string quantity = 4; //畜牧育量
-		string species = 5; //养殖物种
+		string name = 2; //养殖场名称
+		string province = 3;
+		string city = 4;
+		string addr = 5; //详细地址 or GPS?
+		string area = 6; //面积
+		string quantity = 7; //畜牧育量
+		string species = 8; //养殖物种
 	}
 
 	message FundingInfo{
-		string totalAmount = 1; //项目总投入
-		string paidIn =2; //实际到位
-		string outlay = 3; //实际支出
-		string povertyRelief = 4; //扶贫人口
+		int64 totalAmount = 1; //项目总投入
+		int64 paidIn =2; //实际到位
+		int64 outlay = 3; //实际支出
+		int64 povertyRelief = 4; //扶贫人口
+		string creditRating = 5; //信用评级
+		int64 registeredCapital = 6; //注册资本
+		int64 registeredAsset = 7; //注册资产
 	}
 
 
@@ -40,13 +46,36 @@ message Farm {
 		int64 type2=3;
 	}
 
+	//记录免疫信息，由防疫站直接写入..不需要统计信息
+	message Vaccination {
+		//免疫实施率
+		message VaccinationRate {
+			string type = 1; //免疫种类
+			string rate = 2;
+		}
+		repeated VaccinationRate vaccinationRate = 1;
+		string earLabelMatchRate = 2;
+	}
+
+    //记录销售信息，不需要按年统计，由屠宰场直接写入；
+    //为保持历史信息，这里用数组记录
+
+    message Sale {
+        string date = 1;
+        int64 amount = 2; //屠宰头数
+        string earLabelMatchRate = 3;
+        string totalBeefAmount = 4; //总出肉量
+        string beefRatio = 5; //出肉率
+        string marbledRatio = 6; //雪花比例
+        int64 resellAmount = 7; //转卖头数
+    }
 
 	string ID = 1;
 	BasicInfo 	basicInfo = 2;
 	FundingInfo fundingInfo = 3;
 	repeated Inventory inventory = 4;
 	repeated Feed feed = 5;
-
-	//养殖防疫信息和销售信息记录方式待定
+	Vaccination vaccination = 6;
+    repeated Sale sale = 7;
 
 }

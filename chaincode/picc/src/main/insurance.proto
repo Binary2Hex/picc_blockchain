@@ -8,4 +8,6 @@ message Insurance {
     string endDate = 4;
     bool checked = 5; //是否验标
     string details = 6; //有必要记录补充信息?
+    int64 amountInsured = 7; //保险量
+    int64 amountLoss = 8; //出险量
 }

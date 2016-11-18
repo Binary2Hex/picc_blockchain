@@ -32,10 +32,12 @@ func generateColumns(colTypes []ColDef, colKeys []bool) ([]*shim.ColumnDefinitio
 
 func createTable(stub *shim.ChaincodeStub, tableName string, columnTypes []ColDef, columnKeys []bool) error {
 	if stub == nil || tableName == "" || columnTypes == nil || columnKeys == nil {
+		ccLogger.Error("none of the parameters for createTable should be nil")
 		return errors.New("none of the parameters for createTable should be nil")
 	}
 
 	if len(columnTypes) != len(columnKeys) {
+		ccLogger.Error("length of columnTypes and columnKeys should be equal!")
 		return errors.New("length of columnTypes and columnKeys should be equal!")
 	}
 
