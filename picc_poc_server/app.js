@@ -1,51 +1,47 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-
-var index = require('./routes/index');
-var users = require('./routes/users');
+/**
+ * Created by cocoaWang on 2016/11/18.
+ */
+var restify = require('restify');
 var login_register = require('./routes/login_register');
+var picc_blockchain = require('./config/picc_blockchain');
+var server = restify.createServer();
+server.use(restify.bodyParser());
+/*
+*  init 方法，用于启动server 时 enroll 三个 client 到 blockchain中
+ * 包括 政府人员、银行贷款人员、保险人员 各一个
+* */
+init();
 
-var app = express();
+function init() {
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+}
 
 
-app.use('/', index);
-app.use('/users', users);
-app.use('/',login_register);
+/*
+*  用于 保险、银行、政府人员的登录、注册
+*
+* */
+server.post('/login',function login(req,res,next) {
+    console.log("login processing");
+    login_register.queryByUserName(req,res,next);
+    return next();
 
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+server.post('register',function register(req,res,next) {
+    console.log("register processing");
+    login_register.addUser(req,res,next);
+    return next();
 });
 
 
-module.exports = app;
+
+
+
+
+
+
+server.listen(3900, function() {
+    console.log('%s listening at %s', server.name, server.url);
+});
+
