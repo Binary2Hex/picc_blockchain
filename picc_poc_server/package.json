@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "restify":"latest",
-    "mysql":"latest"
-
+    "mysql":"latest",
+    "hfc":"0.5.4"
   }
 }

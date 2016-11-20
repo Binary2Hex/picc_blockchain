@@ -1,10 +1,10 @@
 /**
- * Created by cocoaWang on 2016/11/18.
+ * Created by wsh2160132 on 11/20/2016.
  */
+
 var hfc = require("hfc");
 
 console.log(" **** starting HFC sample ****");
-
 
 // get the addresses from the docker-compose environment
 var PEER_ADDRESS         = process.env.CORE_PEER_ADDRESS;
