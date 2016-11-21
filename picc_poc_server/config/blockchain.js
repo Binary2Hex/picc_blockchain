@@ -4,29 +4,29 @@
 module.exports = {
     deploy_mode: 'dev',
     membersrvc: {
-        address: '172.17.0.3'
+        address: '9.12.22.11:10000'
     },
     peer: {
-        address: '172.17.0.3'
+        address: '9.12.22.11:20001'
     },
     /*blockchain的client user*/
     clients: [
         {
             enrollId: 'gov',
             enrollSecret: 'IUZCYDngtwjW',
-            affiliation: 'government'
+            affiliation: 'institution_a'
         },
 
         {
             enrollId: 'Bank_1',
             enrollSecret: 'mRbbQTpZfVVa',
-            affiliation: 'picc_loan'
+            affiliation: 'institution_a'
         },
 
         {
             enrollId: 'Insurance_1',
             enrollSecret: 'BTaWHtHrCZry',
-            affiliation : 'picc_insurance'
+            affiliation : 'institution_a'
         }
     ],
 
