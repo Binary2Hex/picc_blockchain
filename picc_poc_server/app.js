@@ -21,4 +21,4 @@ server.listen(config_general.LISTEN_PORT, function() {
  *
  * 部署所有的chaincode
  * */
-bc_service.init();
+ bc_service.init();

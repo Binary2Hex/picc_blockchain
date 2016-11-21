@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"strconv"
 	"strings"
+
+	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
 const (
@@ -39,6 +40,25 @@ func createFarmTables(stub *shim.ChaincodeStub) error {
 		return err
 	}
 	return createTable(stub, FARM_LOCATION_INDEX_TABLE, farmLocationIndexColumnTypes, farmLocationIndexColumnKeys)
+}
+
+//如果创建成功，则返回新创建的养殖场ID.若失败则返回error失败原因
+func createFarm(stub *shim.ChaincodeStub, id string) ([]byte, error) {
+	farm := Farm{}
+	farm.ID = id
+	inserted, ok := stub.InsertRow(FARM_TABLE, shim.Row{Columns: generateFarmRow(&farm)})
+	if inserted {
+		return []byte(id), nil
+	}
+	if !inserted && ok == nil {
+		return nil, errors.New("Already exists the farm id " + id)
+	}
+	return nil, ok
+}
+
+func updateFarmBasicInfo(stub *shim.ChaincodeStub, basicInfo string) ([]byte, error) {
+	ccLogger.Debug("received basicInfo string:" + basicInfo)
+	return nil, nil
 }
 
 func getFarmById(stub *shim.ChaincodeStub, id string) *Farm {

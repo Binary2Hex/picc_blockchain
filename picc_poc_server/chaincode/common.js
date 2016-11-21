@@ -47,13 +47,17 @@ enroll();
 function enroll() {
     console.log("enrolling user admin ...");
     // Enroll "admin" which is preregistered in the membersrvc.yaml
-    chain.enroll("admin", "Xurw3yU9zI0l", function(err, admin) {
-        if (err) {
-            console.log("ERROR: failed to register admin: %s",err);
-            process.exit(1);
-        }
-        // Set this user as the chain's registrar which is authorized to register other users.
+
+
+
+    chain.getUser("admin", function(err, member) {
+        if (err) throw Error("Failed to getUser " + users[0].username + ": " + err);
+
+        console.log("admin is available ... can create new users\n");
+        tStart = tStart-125000;
+        user = member;
         chain.setRegistrar(admin);
+
 
         var userName = "JohnDoe";
         // registrationRequest
@@ -66,8 +70,29 @@ function enroll() {
             console.log("Enrolled %s successfully\n", userName);
             deploy(user);
         });
-        chain
+
     });
+
+    // chain.enroll("admin","PxUMpKADuzdm", function(err, admin) {
+    //     if (err) {
+    //         console.log("ERROR: failed to register admin: %s",err);
+    //         process.exit(1);
+    //     }
+    //     // Set this user as the chain's registrar which is authorized to register other users.
+    //      chain.setRegistrar(admin);
+    //
+    //     var userName = "JohnDoe";
+    //     // registrationRequest
+    //     var registrationRequest = {
+    //         enrollmentID: userName,
+    //         affiliation: "bank_a"
+    //     };
+    //     chain.registerAndEnroll(registrationRequest, function(error, user) {
+    //         if (error) throw Error(" Failed to register and enroll " + userName + ": " + error);
+    //         console.log("Enrolled %s successfully\n", userName);
+    //         deploy(user);
+    //     });
+    // });
 }
 
 // Deploy chaincode
