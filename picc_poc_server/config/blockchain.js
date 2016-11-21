@@ -4,31 +4,31 @@
 module.exports = {
     deploy_mode: 'dev',
     membersrvc: {
-        address: '172.17.0.3'
+        address: 'localhost:50051'
     },
     peer: {
-        address: '172.17.0.3'
+        address: 'localhost:50051'
     },
     /*blockchain的client user*/
     clients: [
         {
             enrollId: 'gov',
             enrollSecret: 'IUZCYDngtwjW',
-            affiliation: 'government'
+            affiliation: 'picc_poc'
         },
 
         {
             enrollId: 'Bank_1',
             enrollSecret: 'mRbbQTpZfVVa',
-            affiliation: 'picc_loan'
+            affiliation: 'picc_poc'
         },
 
         {
             enrollId: 'Insurance_1',
             enrollSecret: 'BTaWHtHrCZry',
-            affiliation : 'picc_insurance'
+            affiliation : 'picc_poc'
         }
     ],
 
-    fileKeyValStore: '/wsh/Blockchain/Blockchain-Demo/picc_blockchain_poc/picc_poc_server/keyValStore'
+    fileKeyValStore: '/tmp/keyValStore'
 };

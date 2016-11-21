@@ -31,7 +31,11 @@ exports.init = function() {
     /*认证三个 client ， gov bank insurance*/
     var clients = picc_blockchain.clients;
     clients.forEach(function (client) {
-        chain.enroll(client.enrollId,client.enrollSecret);
+        chain.enroll(client.enrollId,client.enrollSecret,function (err,user){
+            if (err) {
+                console.log("ERROR: failed to register admin: %s",err);
+                process.exit(1);
+            }
+        });
     });
-
 }
