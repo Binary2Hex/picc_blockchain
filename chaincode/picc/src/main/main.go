@@ -4,6 +4,7 @@ import "fmt"
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/op/go-logging"
 )
@@ -37,7 +38,14 @@ func (t *MainCC) Init(stub *shim.ChaincodeStub, function string, args []string) 
 
 func (t *MainCC) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	ccLogger.Debug("Invoke called!")
-	return nil, nil
+	if function == "createFarm" {
+		if len(args) != 1 {
+			return nil, errors.New("args not match for createFarm, need 1 arg as farm id")
+		}
+		return createFarm(stub, args[0])
+	}
+	ccLogger.Debug("function " + function + " not supported in Invoke")
+	return nil, errors.New("function " + function + " not supported in Invoke!")
 }
 
 func (t *MainCC) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
@@ -95,8 +103,8 @@ func (t *MainCC) Query(stub *shim.ChaincodeStub, function string, args []string)
 		return getAllLoanIdByLender(stub, args[0])
 	}
 
-	ccLogger.Debug("function " + function + " not supported!")
-	return nil, errors.New("function " + function + " not supported!")
+	ccLogger.Debug("function " + function + " not supported in Query!")
+	return nil, errors.New("function " + function + " not supported in Query!")
 }
 
 func main() {
