@@ -30,12 +30,38 @@ exports.init = function() {
 
     /*认证三个 client ， gov bank insurance*/
     var clients = picc_blockchain.clients;
-    clients.forEach(function (client) {
+    var client  = picc_blockchain.client;
+    // clients.forEach(function (client) {
         chain.enroll(client.enrollId,client.enrollSecret,function (err,user){
             if (err) {
                 console.log("ERROR: failed to register admin: %s",err);
                 process.exit(1);
             }
+             deploy(user);
         });
+    // });
+}
+
+// Deploy chaincode
+function deploy(user) {
+    // Construct the deploy request
+    var deployRequest = {
+        chaincodeName: picc_blockchain.chaincodes.picc_chain.chaincodeName,
+        fcn: "init",
+        args: ["a", "100", "b", "200"]
+    };
+    // path for chaincode
+    deployRequest.chaincodePath = picc_blockchain.chaincodes.picc_chain.chaincodePath;
+
+    // Issue the deploy request and listen for events
+    var tx = user.deploy(deployRequest);
+    tx.on('complete', function(results) {
+        // Deploy request completed successfully
+        console.log("deploy complete; results: %j",results);
     });
+    tx.on('error', function(error) {
+        console.log("Failed to deploy chaincode: request=%j, error=%k",deployRequest,error);
+        process.exit(1);
+    });
+
 }
