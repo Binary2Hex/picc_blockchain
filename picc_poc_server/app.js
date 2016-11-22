@@ -9,7 +9,8 @@ var server = restify.createServer();
 server.use(restify.bodyParser());
 
 
-require('./routes/login_register')(server);
+require('./ry' +
+    'outes/login_register')(server);
 
 server.listen(config_general.LISTEN_PORT, function() {
     console.log('%s listening at %s on port %s', server.name, server.url, server.address().port);

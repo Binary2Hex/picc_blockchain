@@ -7,7 +7,7 @@ module.exports = {
         address: 'localhost:50051'
     },
     peer: {
-        address: 'localhost:50051'
+        address: 'localhost:30303'
     },
     /*blockchain的client user*/
     clients: [
@@ -16,18 +16,16 @@ module.exports = {
             enrollSecret: 'IUZCYDngtwjW',
             affiliation: 'picc_poc'
         },
-
-        // {
-        //     enrollId: 'Bank_1',
-        //     enrollSecret: 'mRbbQTpZfVVa',
-        //     affiliation: 'picc_poc'
-        // },
-        //
-        // {
-        //     enrollId: 'Insurance_1',
-        //     enrollSecret: 'BTaWHtHrCZry',
-        //     affiliation : 'picc_poc'
-        // }
+        {
+            enrollId: 'Bank_1',
+            enrollSecret: 'mRbbQTpZfVVa',
+            affiliation: 'picc_poc'
+        },
+        {
+            enrollId: 'Insurance_1',
+            enrollSecret: 'BTaWHtHrCZry',
+            affiliation : 'picc_poc'
+        }
     ],
     client : {
         enrollId: 'gov',
@@ -38,7 +36,8 @@ module.exports = {
     chaincodes: {
         picc_chain: {
             chaincodeName: 'picc_chaincode',
-            chaincodePath: 'github.com/hyperledger/fabric/picc_poc_chaincodes/picc_poc_chaincodes'
+            //  path 是 chaincode 所在文件夹
+            chaincodePath: 'github.com/hyperledger/fabric/picc_poc_chaincodes'
         }
     },
 

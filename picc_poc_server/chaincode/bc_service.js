@@ -4,30 +4,29 @@
 var hfc = require('hfc');
 var picc_blockchain = require('../config/blockchain');
 
+// default config
+var MEMBERSRVC_ADDRESS   = picc_blockchain.membersrvc.address;
+var PEER_ADDRESS = picc_blockchain.peer.address;
+var chain = hfc.newChain("mychain");
+
+chain.setKeyValStore( hfc.newFileKeyValStore(picc_blockchain.fileKeyValStore));
+chain.setMemberServicesUrl("grpc://"+MEMBERSRVC_ADDRESS);
+chain.addPeer("grpc://"+PEER_ADDRESS);
+
+var mode = picc_blockchain.deploy_mode;
+console.log("DEPLOY_MODE=" + mode);
+if (mode === 'dev') {
+    chain.setDevMode(true);
+    //Deploy will not take long as the chain should already be running
+    chain.setDeployWaitTime(10);
+} else {
+    chain.setDevMode(false);
+    //Deploy will take much longer in network mode
+    chain.setDeployWaitTime(120);
+}
+chain.setInvokeWaitTime(10);
+
 exports.init = function() {
-    // config 文件中配置 peer 和 membersrvc 的地址
-    var MEMBERSRVC_ADDRESS   = picc_blockchain.membersrvc.address;
-    var PEER_ADDRESS = picc_blockchain.peer.address;
-    var chain = hfc.newChain("mychain");
-
-    chain.setKeyValStore( hfc.newFileKeyValStore(picc_blockchain.fileKeyValStore));
-    chain.setMemberServicesUrl("grpc://"+MEMBERSRVC_ADDRESS);
-    chain.addPeer("grpc://"+PEER_ADDRESS);
-
-    /*配置是否为 dev mode*/
-    var mode = picc_blockchain.deploy_mode;
-    console.log("DEPLOY_MODE=" + mode);
-    if (mode === 'dev') {
-        chain.setDevMode(true);
-        //Deploy will not take long as the chain should already be running
-        chain.setDeployWaitTime(10);
-    } else {
-        chain.setDevMode(false);
-        //Deploy will take much longer in network mode
-        chain.setDeployWaitTime(120);
-    }
-    chain.setInvokeWaitTime(10);
-
     /*认证三个 client ， gov bank insurance*/
     var clients = picc_blockchain.clients;
     var client  = picc_blockchain.client;
@@ -42,26 +41,53 @@ exports.init = function() {
     // });
 }
 
-// Deploy chaincode
+/* bc_service for  deploy chaincodes */
 function deploy(user) {
     // Construct the deploy request
     var deployRequest = {
         chaincodeName: picc_blockchain.chaincodes.picc_chain.chaincodeName,
         fcn: "init",
-        args: ["a", "100", "b", "200"]
+        args: [],
+        chaincodePath : picc_blockchain.chaincodes.picc_chain.chaincodePath
     };
-    // path for chaincode
-    deployRequest.chaincodePath = picc_blockchain.chaincodes.picc_chain.chaincodePath;
-
     // Issue the deploy request and listen for events
     var tx = user.deploy(deployRequest);
     tx.on('complete', function(results) {
-        // Deploy request completed successfully
         console.log("deploy complete; results: %j",results);
     });
     tx.on('error', function(error) {
         console.log("Failed to deploy chaincode: request=%j, error=%k",deployRequest,error);
         process.exit(1);
     });
-
 }
+
+
+/*
+*  bc_services for  query
+* */
+exports.query =  function (req,res,next) {
+    /*req 请求中需要包括 secureContext \ chaincodeID \ fcn \ args */
+    chain.getUser(req.body.secureContext,function (err,member) {
+        if (err) throw Error("Failed to getUser " + users[0].username + ": " + err);
+        var queryRequest = {
+            chaincodeID: req.chaincodeID,
+            fcn: req.body.function,
+            args: req.body.args
+        };
+
+        var tx = member.query(queryRequest);
+        tx.on('complete', function (results) {
+            console.log("query completed successfully; results=%j",results);
+            return results;
+            process.exit(0);
+        });
+        tx.on('error', function (error) {
+            console.log("Failed to query chaincode: request=%j, error=%k",queryRequest,error);
+            process.exit(1);
+        });
+    });
+}
+
+
+
+
